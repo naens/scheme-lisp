@@ -3,12 +3,12 @@ Enum ExpType {
     Symbol
     String
     Character
+    Boolean
     Cons
 }
 
 function Parse-List($Tokens, $length, $i) {
     $token = $Tokens[$i]
-    Write-Host Parse-List $length $i token: $token
     $prev = $null
     $first = $null
     while ($i -lt $length) {
@@ -16,7 +16,6 @@ function Parse-List($Tokens, $length, $i) {
             "Dot" {
                 $i++
                 $exp, $i = Parse-Exp $Tokens $length $i
-                Write-Host Parse-List "[DOT]" exp=$exp new-i: $i $Tokens[$i]
                 if ($Tokens[$i].Type -eq "ParClose" -and $prev -ne $null) {
                     $i++
                     $prev.Value = @($prev.Value[0], $exp)
@@ -26,7 +25,6 @@ function Parse-List($Tokens, $length, $i) {
                 }
             }
             "ParClose" {
-                Write-Host Parse-List ParClose $length $i token: $token
                 $i++
                 return $first, $i
             }
@@ -49,23 +47,26 @@ function Parse-List($Tokens, $length, $i) {
 }
 
 function Parse-Exp($Tokens, $length, $i) {
-    Write-Host Parse-Exps $length, $i
     $token = $Tokens[$i]
-    switch ($token."Type") {
+    switch ($token.Type) {
         "Number" {
-            $exp = New-Object PSObject -Property @{ Type = [ExpType]::Number; Value = $token."Value"}
+            $exp = New-Object PSObject -Property @{ Type = [ExpType]::Number; Value = $token.Value}
             return $exp, ($i+1)
         }
         "Symbol" {
-            $exp = New-Object PSObject -Property @{ Type = [ExpType]::Symbol; Value = $token."Value"}
+            $exp = New-Object PSObject -Property @{ Type = [ExpType]::Symbol; Value = $token.Value}
             return $exp, ($i+1)
         }
         "String" {
-            $exp = New-Object PSObject -Property @{ Type = [ExpType]::String; Value = $token."Value"}
+            $exp = New-Object PSObject -Property @{ Type = [ExpType]::String; Value = $token.Value}
             return $exp, ($i+1)
         }
         "Character" {
-            $exp = New-Object PSObject -Property @{ Type = [ExpType]::Character; Value = $token."Value"}
+            $exp = New-Object PSObject -Property @{ Type = [ExpType]::Character; Value = $token.Value}
+            return $exp, ($i+1)
+        }
+        "Boolean" {
+            $exp = New-Object PSObject -Property @{ Type = [ExpType]::Boolean; Value = $token.Value}
             return $exp, ($i+1)
         }
         "ParOpen" {
@@ -82,7 +83,6 @@ function Parse-Exp($Tokens, $length, $i) {
             $car = New-Object PSObject -Property @{ Type = [ExpType]::Symbol; Value = "QUOTE"}
             $nil = New-Object PSObject -Property @{ Type = [ExpType]::Symbol; Value = "NIL"}
             $subexp, $i = Parse-Exp $Tokens $length ($i+1)
-            Write-Host subexp=$subexp
             $cdr = New-Object PSObject -Property @{ Type = [ExpType]::Cons; Value = @($subexp, $nil)}
             $exp = New-Object PSObject -Property @{ Type = [ExpType]::Cons; Value = @($car, $cdr)}
             return $exp, $i
@@ -106,6 +106,9 @@ function Exp-To-String($Exp) {
         "Character" {
             return "chr:"+$Exp.Value
         }
+        "Boolean" {
+            return "bool:" + $Exp.Value
+        }
         "Cons" {
             $car = Exp-To-String $Exp.Value[0]
             $cdr = Exp-To-String $Exp.Value[1]
@@ -115,7 +118,6 @@ function Exp-To-String($Exp) {
 }
 
 function Parse-Tokens($Tokens) {
-    Write-Host Tokens.length is $Tokens.length
     $i = 0
     $Exps = @()
     $length = $Tokens.length

@@ -3,6 +3,7 @@ Enum TokenType {
     Symbol
     String
     Character
+    Boolean
     ParOpen
     ParClose
     Dot
@@ -34,7 +35,7 @@ function Read-Symbol($Text, $length, $index) {
         $str = $str + $c
         $index++
     }
-    return $str, $index
+    return $str.ToUpper(), $index
 }
 
 function Read-String($Text, $length, $index) {
@@ -56,13 +57,6 @@ function Read-String($Text, $length, $index) {
     return $str, ($index+1)
 }
 
-function Read-Character($Text, $length, $index) {
-    if ($index -lt ($length - 2) -and $Text[$index+1] -eq "\") {
-        return $Text[$index + 2]
-    }
-    return -1
-}
-
 function Read-Comment($Text, $length, $index) {
     $str = ""
     while ($index -lt $length -and !($Text[$index] -match "[\n\r]")) {
@@ -74,8 +68,6 @@ function Read-Comment($Text, $length, $index) {
 function Get-Tokens($Text) {
     $Tokens = @()
     $length = $Text.length
-    Write-Host TEXT: $Text
-    Write-Host length: $length
     $i = 0
     while($i -lt $length) {
         switch -regex  ($Text[$i])
@@ -98,14 +90,30 @@ function Get-Tokens($Text) {
                 $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::String; Value = $v}
             }
             "#" {
-                $c = Read-Character $Text $length $i
-                if ($c -eq -1) {
+                if ($i -lt ($length-1)) {
+                    switch -regex  ($Text[$i+1]) {
+                        "[tT]" {
+                            $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::Boolean; Value = $true }
+                            $i += 2
+                        }
+                        "[fF]" {
+                            $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::Boolean; Value = $false }
+                            $i += 2
+                        }
+                        "\\" {
+                            if ($i -lt ($length-2)) {
+                                $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::Character; Value = $Text[$i+2] }
+                                $i += 3
+                            }
+                        }
+                        default {
+                            $v, $i = Read-Symbol $Text $length $i
+                            $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::Symbol; Value = $v }
+                        }
+                    }
+                } else {
                     $v, $i = Read-Symbol $Text $length $i
                     $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::Symbol; Value = $v }
-                }
-                else {
-                    $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::Character; Value = $c }
-                    $i += 3
                 }
             }
             "\(" {
