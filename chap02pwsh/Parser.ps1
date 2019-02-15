@@ -7,33 +7,84 @@ Enum ExpType {
     Cons
 }
 
+class Exp {
+    $type
+    $value
+    $car
+    $cdr
+
+    Exp($type, $value) {
+        $this.type = $type
+        [ExpType]$t = $this.type
+        if ($t -eq "Cons") {
+            throw "Exp: Cons creation bad arguments"
+        }
+        $this.value = $value
+    }
+
+    Exp($type, $car, $cdr) {
+        $this.type = $type
+        [ExpType]$t = $this.type
+        if ($t -ne "Cons") {
+            throw "Exp: Cons creation bad type " + $type
+        }
+        $this.car = $car
+        $this.cdr = $cdr
+    }
+
+    [string] ToString() {
+        [ExpType]$t = $this.type
+        switch ($t) {
+            "Number" {
+                return "num:"+$this.value
+            }
+            "Symbol" {
+                return "sym:"+$this.value
+            }
+            "String" {
+                return "str:"+$this.value
+            }
+            "Character" {
+                return "chr:"+$this.value
+            }
+            "Boolean" {
+                return "bool:" + $this.value
+            }
+            "Cons" {
+                return "cons:{$($this.car),$($this.cdr)}"
+            }
+        }
+        return "<unknown-expr>: " + $this.type
+    }
+}
+
 function Parse-List($Tokens, $length, $i) {
     $token = $Tokens[$i]
     $prev = $null
     $first = $null
     while ($i -lt $length) {
-        switch ($token.Type) {
-            "Dot" {
+        switch ("[TokenType]::$($token.type)") {
+            "[TokenType]::Dot" {
                 $i++
                 $exp, $i = Parse-Exp $Tokens $length $i
                 if ($Tokens[$i].Type -eq "ParClose" -and $prev -ne $null) {
                     $i++
-                    $prev.Value = @($prev.Value[0], $exp)
+                    $prev.cdr = $exp
                     return $first, $i
                 } else {
                     return $null, $null
                 }
             }
-            "ParClose" {
+            "[TokenType]::ParClose" {
                 $i++
                 return $first, $i
             }
             default {
                 $exp, $i = Parse-Exp $Tokens $length $i
-                $nil = New-Object PSObject -Property @{ Type = [ExpType]::Symbol; Value = "NIL"}
-                $cons = New-Object PSObject -Property @{ Type = [ExpType]::Cons; Value = @($exp, $nil)}
+                $nil = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
+                $cons = New-Object Exp -ArgumentList ([ExpType]::Cons), $exp, $nil
                 if ($prev -ne $null) {
-                    $prev.Value = @($prev.Value[0], $cons)
+                    $prev.cdr = $cons
                 }
                 if ($first -eq $null) {
                     $first = $cons
@@ -48,73 +99,48 @@ function Parse-List($Tokens, $length, $i) {
 
 function Parse-Exp($Tokens, $length, $i) {
     $token = $Tokens[$i]
-    switch ($token.Type) {
-        "Number" {
-            $exp = New-Object PSObject -Property @{ Type = [ExpType]::Number; Value = $token.Value}
+    switch ("[TokenType]::$($token.type)") {
+        "[TokenType]::Number" {
+            $exp = New-Object Exp -ArgumentList ([ExpType]::Number), $token.value
             return $exp, ($i+1)
         }
-        "Symbol" {
-            $exp = New-Object PSObject -Property @{ Type = [ExpType]::Symbol; Value = $token.Value}
+        "[TokenType]::Symbol" {
+            $exp = New-Object Exp -ArgumentList ([ExpType]::Symbol), $token.value
             return $exp, ($i+1)
         }
-        "String" {
-            $exp = New-Object PSObject -Property @{ Type = [ExpType]::String; Value = $token.Value}
+        "[TokenType]::String" {
+            $exp = New-Object Exp -ArgumentList ([ExpType]::String), $token.value
             return $exp, ($i+1)
         }
-        "Character" {
-            $exp = New-Object PSObject -Property @{ Type = [ExpType]::Character; Value = $token.Value}
+        "[TokenType]::Character" {
+            $exp = New-Object Exp -ArgumentList ([ExpType]::Character), $token.value
             return $exp, ($i+1)
         }
-        "Boolean" {
-            $exp = New-Object PSObject -Property @{ Type = [ExpType]::Boolean; Value = $token.Value}
+        "[TokenType]::Boolean" {
+            $exp = New-Object Exp -ArgumentList ([ExpType]::Boolean), $token.value
             return $exp, ($i+1)
         }
-        "ParOpen" {
+        "[TokenType]::ParOpen" {
             $exp, $i = Parse-List $Tokens $length ($i+1)
             return $exp, $i
         }
-        "ParClose" {
+        "[TokenType]::ParClose" {
             return $null, $null
         }
-        "Dot" {
+        "[TokenType]::Dot" {
             return $null, $null
         }
-        "Quote" {
-            $car = New-Object PSObject -Property @{ Type = [ExpType]::Symbol; Value = "QUOTE"}
-            $nil = New-Object PSObject -Property @{ Type = [ExpType]::Symbol; Value = "NIL"}
+        "[TokenType]::Quote" {
+            $car = New-Object Exp -ArgumentList ([ExpType]::Symbol), "QUOTE"
+            $nil = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
             $subexp, $i = Parse-Exp $Tokens $length ($i+1)
-            $cdr = New-Object PSObject -Property @{ Type = [ExpType]::Cons; Value = @($subexp, $nil)}
-            $exp = New-Object PSObject -Property @{ Type = [ExpType]::Cons; Value = @($car, $cdr)}
+            $cdr = New-Object Exp -ArgumentList ([ExpType]::Cons), $subexp, $nil
+            $exp = New-Object Exp -ArgumentList ([ExpType]::Cons), $car, $cdr
             return $exp, $i
         }
     }
-    $exp = New-Object PSObject -Property @{ Type = [ExpType]::Number; Value = -1}
+    $exp = New-Object Exp -ArgumentList ([ExpType]::Number), -1
     return $exp, ($i+1)
-}
-
-function Exp-To-String($Exp) {
-    switch ($Exp.Type) {
-        "Number" {
-            return "num:"+$Exp.Value
-        }
-        "Symbol" {
-            return "sym:"+$Exp.Value
-        }
-        "String" {
-            return "str:"+$Exp.Value
-        }
-        "Character" {
-            return "chr:"+$Exp.Value
-        }
-        "Boolean" {
-            return "bool:" + $Exp.Value
-        }
-        "Cons" {
-            $car = Exp-To-String $Exp.Value[0]
-            $cdr = Exp-To-String $Exp.Value[1]
-            return "cons:{"+$car+","+$cdr+"}"
-        }
-    }
 }
 
 function Parse-Tokens($Tokens) {

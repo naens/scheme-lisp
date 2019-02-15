@@ -1,7 +1,7 @@
 3
 "ad"
 #t
-(a b)
+(a b c)
 '(a b)
 (display (+ 1 2))
 (display "Hello!\q")

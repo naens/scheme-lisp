@@ -16,12 +16,12 @@ function Evaluate($exp, $env, $denv) {
             return $exp
         }
         "Cons" {
-            $car = $Exp.Value[0]
-            $cdr = $Exp.Value[1]
+            $car = $Exp.car
+            $cdr = $Exp.cdr
             if ($car.Type -eq "Symbol") {
                 switch ($car.Value) {
                     "QUOTE" {
-                        return $cdr.Value[0]
+                        return $cdr.car
                     }
                     "IF" {
                         return $cdr
@@ -42,9 +42,9 @@ function Evaluate($exp, $env, $denv) {
                         return $cdr
                     }
                     "DEFINE" {
-                        if ($cdr.Value[0].Type -eq "Symbol") {
-                            $name = $cdr.Value[0].Value
-                            $value = Evaluate $cdr.Value[1].Value[0] $env $denv
+                        if ($cdr.car.Type -eq "Symbol") {
+                            $name = $cdr.car.Value
+                            $value = Evaluate $cdr.cdr.car $env $denv
                             $env.Declare($name, $value)
                             Write-Host Environment update: $env
                             return $value
@@ -63,14 +63,14 @@ function Evaluate($exp, $env, $denv) {
                         return $cdr
                     }
                     "DYNAMIC" {
-                        if ($cdr.Value[0].Type -eq "Symbol") {
-                            $name = $cdr.Value[0].Value
-                            $value = Evaluate $cdr.Value[1].Value[0] $env $denv
+                        if ($cdr.car.Type -eq "Symbol") {
+                            $name = $cdr.car.Value
+                            $value = Evaluate $cdr.cdr.car $env $denv
                             $denv.Declare($name, $value)
                             return $value
                         } else {
                             # no functions for dynamic scope
-                            return New-Object PSObject -Property @{ Type = [ExpType]::Symbol; Value = "NIL"}
+                            return New-Object Exp -ArgumentList [ExpType]::Symbol, "NIL"
                         }
                     }
                     default {

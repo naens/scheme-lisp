@@ -13,12 +13,12 @@ $Tokens = Get-Tokens $Text
 #$Tokens | ForEach-Object {Write-Host $_}
 
 $Exps = Parse-Tokens $Tokens
-#$Exps | ForEach-Object { Write-Host (Exp-To-String $_) }
+#$Exps | ForEach-Object { Write-Host EXP: $_ }
 
 $env = New-Object Environment
 $denv = New-Object Environment
 $Exps | ForEach-Object {
-    Write-Host (Exp-To-String $_)
+    Write-Host $_
     $exp = Evaluate $_ $env $denv
-    Write-Host EXPRESSION: (Exp-To-String $exp $env $denv)
+    Write-Host EXPRESSION: $exp
 }

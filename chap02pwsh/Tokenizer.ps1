@@ -10,6 +10,24 @@ Enum TokenType {
     Quote
 }
 
+class Token {
+    $type
+    $value
+
+    Token($type, $value) {
+        $this.type = $type
+        $this.value = $value
+    }
+
+    Token($type) {
+        $this.type = $type
+    }
+
+    [string] ToString() {
+        return "[TOKEN:type=$($this.type),value=$($this.value)]"
+    }
+}
+
 function Is-Delimiter($char) {
     $char -match "[(){}'""\[\]\t\n\r ]+"
 }
@@ -75,61 +93,61 @@ function Get-Tokens($Text) {
             "-" {
                 if ($i -le ($length-1) -and (Is-Digit($Text[$i+1]))) {
                     $v,$i = Read-Number $Text $length ($i+1)
-                    $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::Number; Value = -$v }
+                    $Tokens += New-Object Token -ArgumentList ([TokenType]::Number), -$v
                 } else {
-                    $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::Symbol; Value = $Text[$i] }
+                    $Tokens += New-Object Token -ArgumentList ([TokenType]::Symbol), $Text[$i]
                     $i++
                 }
             }
             "[0-9]" {
                 $v,$i = Read-Number $Text $length $i
-                $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::Number; Value = $v}
+                $Tokens += New-Object Token -ArgumentList ([TokenType]::Number), $v
             }
             """" {
                 $v,$i = Read-String $Text $length ($i+1)
-                $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::String; Value = $v}
+                $Tokens += New-Object Token -ArgumentList ([TokenType]::String), $v
             }
             "#" {
                 if ($i -lt ($length-1)) {
                     switch -regex  ($Text[$i+1]) {
                         "[tT]" {
-                            $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::Boolean; Value = $true }
+                            $Tokens += New-Object Token -ArgumentList ([TokenType]::Boolean), $true
                             $i += 2
                         }
                         "[fF]" {
-                            $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::Boolean; Value = $false }
+                            $Tokens += New-Object Token -ArgumentList ([TokenType]::Boolean), $false
                             $i += 2
                         }
                         "\\" {
                             if ($i -lt ($length-2)) {
-                                $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::Character; Value = $Text[$i+2] }
+                                $Tokens += New-Object Token -ArgumentList ([TokenType]::Character), $Text[$i+2]
                                 $i += 3
                             }
                         }
                         default {
                             $v, $i = Read-Symbol $Text $length $i
-                            $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::Symbol; Value = $v }
+                            $Tokens += New-Object Token -ArgumentList ([TokenType]::Symbol), $v
                         }
                     }
                 } else {
                     $v, $i = Read-Symbol $Text $length $i
-                    $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::Symbol; Value = $v }
+                    $Tokens += New-Object Token -ArgumentList ([TokenType]::Symbol), $v
                 }
             }
             "\(" {
-                $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::ParOpen }
+                $Tokens += New-Object Token -ArgumentList ([TokenType]::ParOpen)
                 $i++
             }
             "\)" {
-                $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::ParClose }
+                $Tokens += New-Object Token -ArgumentList ([TokenType]::ParClose)
                 $i++
             }
             "\." {
-                $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::Dot }
+                $Tokens += New-Object Token -ArgumentList ([TokenType]::Dot)
                 $i++
             }
             "'" {
-                $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::Quote }
+                $Tokens += New-Object Token -ArgumentList ([TokenType]::Quote)
                 $i++
             }
             ";" {
@@ -139,7 +157,7 @@ function Get-Tokens($Text) {
             default {
                 if (!(Is-Delimiter($Text[$i]))) {
                     $v,$i = Read-Symbol $Text $length $i
-                    $Tokens += New-Object PSObject -Property @{ Type = [TokenType]::Symbol; Value = $v}
+                    $Tokens += New-Object Token -ArgumentList ([TokenType]::Symbol), $v
                 } else {
                     $i++
                 }
