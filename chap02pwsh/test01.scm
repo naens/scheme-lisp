@@ -1,4 +1,8 @@
+3
+"ad"
+#t
 (a b)
+'(a b)
 (display (+ 1 2))
 (display "Hello!\q")
 (a . b)
@@ -7,3 +11,6 @@
 (display -123) ; qwerj
 (a #\@)
 (b ##); welrk
+#t
+(display #f)
+(define a 9)
