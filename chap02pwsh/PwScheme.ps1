@@ -2,8 +2,8 @@
 
 . ".\Tokenizer.ps1"
 . ".\Parser.ps1"
-. ".\Evaluator.ps1"
 . ".\Environment.ps1"
+. ".\Evaluator.ps1"
 
 $Path = $args[0]
 
@@ -19,6 +19,6 @@ $env = New-Object Environment
 $denv = New-Object Environment
 $Exps | ForEach-Object {
     Write-Host (Exp-To-String $_)
-    $exp = Evaluate $_
+    $exp = Evaluate $_ $env $denv
     Write-Host EXPRESSION: (Exp-To-String $exp $env $denv)
 }
