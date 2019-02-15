@@ -42,7 +42,16 @@ function Evaluate($exp, $env, $denv) {
                         return $cdr
                     }
                     "DEFINE" {
-                        return $cdr
+                        if ($cdr.Value[0].Type -eq "Symbol") {
+                            $name = $cdr.Value[0].Value
+                            $value = Evaluate $cdr.Value[1].Value[0] $env $denv
+                            $env.Declare($name, $value)
+                            Write-Host Environment update: $env
+                            return $value
+                        } else {
+                            # TODO: define new function
+                            return $cdr
+                        }
                     }
                     "LAMBDA" {
                         return $cdr
@@ -54,7 +63,15 @@ function Evaluate($exp, $env, $denv) {
                         return $cdr
                     }
                     "DYNAMIC" {
-                        return $cdr
+                        if ($cdr.Value[0].Type -eq "Symbol") {
+                            $name = $cdr.Value[0].Value
+                            $value = Evaluate $cdr.Value[1].Value[0] $env $denv
+                            $denv.Declare($name, $value)
+                            return $value
+                        } else {
+                            # no functions for dynamic scope
+                            return New-Object PSObject -Property @{ Type = [ExpType]::Symbol; Value = "NIL"}
+                        }
                     }
                     default {
                         # TODO: is a name of a function => find and invoke
@@ -64,12 +81,12 @@ function Evaluate($exp, $env, $denv) {
                 return Evaluate $car.Value
             } else {
                 if ($car.Type -eq "Cons") {
-                    $function = Evaluate $car
+                    $function = Evaluate $car $env $denv
                     # TODO: invoke function with arguments
                     return $function
                 } else {
                     # TODO: Don't know what to do, probably error
-                    return Evaluate $car
+                    return Evaluate $car $env $denv
                 }
             }
         }
