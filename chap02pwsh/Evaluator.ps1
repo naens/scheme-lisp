@@ -1,7 +1,8 @@
 function LookUp($name, $env, $denv) {
+    Write-Host LOOKUP $name env=$env denv=$denv
     $val = $env.LookUp($name)
     if ($val -eq $null) {
-        return $denv.Lookup($name)
+        return $denv.LookUp($name)
     }
     return $val
 }
@@ -23,6 +24,97 @@ function Eval-Args($argCons, $env, $denv) {
         $cons = $cons.cdr
     }
     return $args
+}
+
+function Is-True($exp) {
+    return $exp.type -eq "Boolean" -and $exp.value
+}
+
+function Eval-If($ifTail, $env, $denv) {
+    $cond = Evaluate $ifTail.car $env $denv
+    if (Is-True $cond) {
+        return Evaluate $ifTail.cdr.car $env $denv
+    } elseif ($ifTail.cdr.cdr.type -eq "Cons") {
+        return Evaluate $ifTail.cdr.cdr.car $env $denv
+    } else {
+        return New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
+    }
+}
+
+function Eval-Cond($condTail, $env, $denv) {
+    $c = $condTail
+    while ($c.type -eq "Cons" -and $c.car.type -eq "Cons") {
+        $pair = $c.car     # (cons <cond> . <body>)
+        $cond = $pair.car
+        $body = $pair.cdr
+        if ($cond.type -eq "Symbol" -and $cond.value -eq "ELSE") {
+            return Eval-Body $body $env $denv
+        }
+        $condValue = Evaluate $cond $env $denv
+        if (Is-True($condValue)) {
+            return Eval-Body $body $env $denv
+        }
+        $c = $c.cdr
+    }
+    return New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
+}
+
+function Eval-And($tail, $env, $denv) {
+    $c = $tail
+    while ($c.type -eq "Cons") {
+        $car = Evaluate $c.car $env $denv
+        if (!(Is-True $car)) {
+            return New-Object Exp -ArgumentList ([ExpType]::Boolean), $false
+        }
+        $c = $c.cdr
+    }
+    return New-Object Exp -ArgumentList ([ExpType]::Boolean), $true
+}
+
+function Eval-Or($tail, $env, $denv) {
+    $c = $tail
+    while ($c.type -eq "Cons") {
+        $car = Evaluate $c.car $env $denv
+        if (Is-True $car) {
+            return New-Object Exp -ArgumentList ([ExpType]::Boolean), $true
+        }
+        $c = $c.cdr
+    }
+    return New-Object Exp -ArgumentList ([ExpType]::Boolean), $false
+}
+
+function Eval-Case($caseTail, $env, $denv) {
+    $val = Evaluate $caseTail.car $env $denv
+    Write-Host EVAL-CASE val=$val
+    $c = $caseTail.cdr
+    while ($c.type -eq "Cons" -and $c.car.type -eq "Cons") {
+        $pair = $c.car     # (cons ({<datum>}) . <body>)
+        $body = $pair.cdr
+        if ($pair.car.type -eq "Symbol" -and $pair.car.value -eq "ELSE") {
+            return Eval-Body $body $env $denv
+        }
+        $datumList = $pair.car
+        while ($datumList.type -eq "Cons") {
+            $datum = $datumList.car     # !! datum is not evaluated here
+            Write-Host EVAL-CASE datum=$datum val=$val
+            if (IsEqual $val  $datum) {
+                return Eval-Body $body $env $denv
+            }
+            $datumList = $datumList.cdr
+        }
+        $c = $c.cdr
+    }
+    return New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
+}
+
+function Eval-Body($body, $env, $denv) {
+    $cons = $body
+    $result = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
+    while ($cons.type -eq "Cons") {
+        $result = Evaluate $cons.car $env $denv
+        $cons = $cons.cdr
+    }
+    return $result
 }
 
 function Invoke($function, $defEnv, $denv) {
@@ -55,24 +147,22 @@ function Evaluate($exp, $env, $denv) {
                         return $cdr.car
                     }
                     "IF" {
-                        # TODO
-                        return $cdr
+                        return Eval-If $cdr $env $denv
                     }
                     "COND" {
-                        # TODO
-                        return $cdr
+                        return Eval-Cond $cdr $env $denv
                     }
                     "CASE" {
-                        # TODO
-                        return $cdr
+                        return Eval-Case $cdr $env $denv
                     }
                     "AND" {
-                        # TODO
-                        return $cdr
+                        return Eval-And $cdr $env $denv
                     }
                     "OR" {
-                        # TODO
-                        return $cdr
+                        return Eval-Or $cdr $env $denv
+                    }
+                    "BEGIN" {
+                        return Eval-Body $cdr $env $denv
                     }
                     "SET!" {
                         return Update $cdr.car.value $cdr.cdr.car $env $denv
