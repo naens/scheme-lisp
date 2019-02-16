@@ -26,9 +26,9 @@ class Environment {
     }
 
     [void] Declare($name, $value) {
-        Write-Host name=$name value=$value
+        #Write-Host name=$name value=$value
         if ($this.array.containsKey($name)) {
-            $cell = $this.array.$name
+            $cell = $this.array[$name]
             if ($cell.level -lt $this.level) {
                 $newcell = New-Object Cell -ArgumentList $this.level, $value, $cell
                 $this.array[$name] = $newcell
@@ -38,6 +38,25 @@ class Environment {
         } else {
             $this.array[$name] = New-Object Cell -ArgumentList $this.level, $value, $null
         }
+    }
+
+    [Exp] LookUp($name) {
+        if ($this.array.containsKey($name)) {
+            $cell = $this.array[$name]
+            if ($cell -ne $null) {
+                return $cell.value
+            }
+        }
+        return $null
+    }
+
+    [boolean] Update($name, $value) {
+        if ($this.array.containsKey($name)) {
+            $cell = $this.array[$name]
+            $cell.value = $value
+            return $true
+        }
+        return $false
     }
 
     [string] ToString() {
