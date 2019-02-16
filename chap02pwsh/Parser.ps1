@@ -5,6 +5,8 @@ Enum ExpType {
     Character
     Boolean
     Cons
+    Function
+    BuiltIn
 }
 
 class Exp {
@@ -12,6 +14,17 @@ class Exp {
     $value
     $car
     $cdr
+    $defEnv
+    $params
+    $dotParam
+
+    Exp($type) {
+        $this.type = $type
+        [ExpType]$t = $this.type
+        if ($t -eq "[ExpType]::BuiltIn") {
+            throw "Exp: BuiltIn creation bad arguments"
+        }
+    }
 
     Exp($type, $value) {
         $this.type = $type
@@ -32,7 +45,7 @@ class Exp {
         $this.cdr = $cdr
     }
 
-    [string] ToString() {
+    [string] ToString0() {
         [ExpType]$t = $this.type
         switch ($t) {
             "Number" {
@@ -53,8 +66,55 @@ class Exp {
             "Cons" {
                 return "cons:{$($this.car),$($this.cdr)}"
             }
+            default {
+                return "{$t}"
+            }
         }
         return "<unknown-expr>: " + $this.type
+    }
+
+    [string] MakeSublistString($cons) {
+        if ($cons.cdr.type -eq "Cons") {
+            $restString = $this.MakeSublistString($cons.cdr)
+            return $cons.car.ToString() + " " + $restString
+        } if ($cons.cdr.type -eq "Symbol" -and $cons.cdr.value -eq "NIL") {
+            return $cons.car.ToString()
+        } else {
+            return $cons.car.ToString() + " . " + $cons.cdr.ToString()
+        }
+    }
+
+    [string] ToString() {
+        [ExpType]$t = $this.type
+        switch ($t) {
+            "Number" {
+                return $this.value
+            }
+            "Symbol" {
+                return $this.value
+            }
+            "String" {
+                return """$($this.value)"""
+            }
+            "Character" {
+                return "#\$($this.value)"
+            }
+            "Boolean" {
+                if ($this.value) {
+                    return "#t"
+                } else {
+                    return "#f"
+                }
+            }
+            "Cons" {
+                $subList = $this.MakeSublistString($this)
+                return "($subList)"
+            }
+            default {
+                return "<<<$t>>>"
+            }
+        }
+        return "<<<unknown-expr:" + $this.type + ">>>"
     }
 }
 

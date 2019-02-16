@@ -1,10 +1,41 @@
+function LookUp($name, $env, $denv) {
+    $val = $env.LookUp($name)
+    if ($val -eq $null) {
+        return $denv.Lookup($name)
+    }
+    return $val
+}
+
+function Update($name, $value, $env, $denv) {
+    if (!$env.Update($name, $value)) {
+        return $denv.Update($name, $value)
+    }
+    return $true
+}
+
+function Eval-Args($argCons, $env, $denv) {
+    $args = @()
+    $cons = $argCons
+    while ($cons.type -eq "Cons") {
+        $arg = $cons.car
+        $val = Evaluate $arg $env $denv
+        $args += $val
+        $cons = $cons.cdr
+    }
+    return $args
+}
+
+function Invoke($function, $defEnv, $denv) {
+    # TODO: evaluate function body and return the value
+}
+
 function Evaluate($exp, $env, $denv) {
     switch ($Exp.Type) {
         "Number" {
             return $exp
         }
         "Symbol" {
-            return $exp
+            return LookUp $exp.value $env $denv
         }
         "String" {
             return $exp
@@ -24,22 +55,27 @@ function Evaluate($exp, $env, $denv) {
                         return $cdr.car
                     }
                     "IF" {
+                        # TODO
                         return $cdr
                     }
                     "COND" {
+                        # TODO
                         return $cdr
                     }
                     "CASE" {
+                        # TODO
                         return $cdr
                     }
                     "AND" {
+                        # TODO
                         return $cdr
                     }
                     "OR" {
+                        # TODO
                         return $cdr
                     }
                     "SET!" {
-                        return $cdr
+                        return Update $cdr.car.value $cdr.cdr.car $env $denv
                     }
                     "DEFINE" {
                         if ($cdr.car.Type -eq "Symbol") {
@@ -54,6 +90,7 @@ function Evaluate($exp, $env, $denv) {
                         }
                     }
                     "LAMBDA" {
+                        # TODO: define new function, function environment = current $env
                         return $cdr
                     }
                     "LET" {
@@ -74,8 +111,33 @@ function Evaluate($exp, $env, $denv) {
                         }
                     }
                     default {
-                        # TODO: is a name of a function => find and invoke
-                        return $car
+                        $function = LookUp $car.value $env $denv
+                        if ($function -ne $null) {
+                            if ($function.type -eq "BuiltIn") {
+                                $args = Eval-Args $cdr $env $denv
+                                return Call-BuiltIn $car $args
+                            } elseif ($function.type -eq "[ExpType]::Function") {
+                                $args = Eval-Args $car.cdr.car $env $denv
+                                $params = $function.params
+                                $defEnv = $function.defEnv
+                                $defEnv.EnterScope
+
+                                # set params
+                                $i = 0
+                                foreach ($param in $params) {
+                                    $arg = $args[$i]
+                                    $i++
+                                }
+                                if ($args.length -ge $i) {
+                                    $function.dotParam = $args[$i..($args.Length-1)]
+                                }
+
+                                Invoke $function $defEnv $denv
+                                $defEnv.LeaveScope
+                            }
+                        }
+                        # TODO: not a function throw error!!!
+                        return $null
                     }
                 }
                 return Evaluate $car.Value
@@ -85,7 +147,7 @@ function Evaluate($exp, $env, $denv) {
                     # TODO: invoke function with arguments
                     return $function
                 } else {
-                    # TODO: Don't know what to do, probably error
+                    # TODO: throw here, catch in PwScheme loop
                     return Evaluate $car $env $denv
                 }
             }
