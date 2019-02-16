@@ -41,8 +41,8 @@ class Environment {
     }
 
     [Exp] LookUp($name) {
-        if ($this.array.containsKey($name)) {
-            $cell = $this.array[$name]
+        if ($this.array.containsKey("$name")) {
+            $cell = $this.array["$name"]
             if ($cell -ne $null) {
                 return $cell.value
             }
