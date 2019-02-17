@@ -23,9 +23,9 @@ $Exps | ForEach-Object {
     #Write-Host $_
     try {
         $exp = Evaluate $_ $env $denv
+        Write-Host EVALUATED TO: $exp
     } catch [EvaluatorException] {
-        Write-Output "EvaluatorException in PwScheme loop: " $_.msg
+        Write-Output ("EvaluatorException in PwScheme loop: " + $($_.Exception.msg))
     }
 
-    Write-Host $exp
 }

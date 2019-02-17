@@ -9,6 +9,8 @@ function Make-Global-Environment() {
     $globEnv = New-Object Environment
     Make-BuiltIn "+" $globEnv
     Make-BuiltIn "-" $globEnv
+    Make-BuiltIn "*" $globEnv
+    Make-BuiltIn "/" $globEnv
     Make-BuiltIn "=" $globEnv
     Make-BuiltIn "EQUAL?" $globEnv
     Make-BuiltIn "DISPLAY" $globEnv
@@ -19,7 +21,8 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
     $args = @()
     $cons = $argsExp
     while ($cons.type -eq "Cons") {
-        $args += Evaluate $cons.car $env $denv
+        $val = Evaluate $cons.car $env $denv
+        $args += $val
         $cons = $cons.cdr
     }
     switch ($name.value) {
@@ -28,6 +31,12 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
         }
         "-" {
             return SysMinus($args)
+        }
+        "*" {
+            return SysMult($args)
+        }
+        "/" {
+            return SysDiv($args)
         }
         "=" {
             return SysEqNum($aargs)
@@ -68,9 +77,37 @@ function SysMinus($a) {
     return New-Object Exp -ArgumentList ([ExpType]::Number), $result
 }
 
+function SysMult($a) {
+    $result = 1
+    foreach ($num in $a) {
+        $result *= $num.value
+    }
+    return New-Object Exp -ArgumentList ([ExpType]::Number), $result
+}
+
+function SysDiv($a) {
+    if ($a.length -eq 0) {
+        return New-Object Exp -ArgumentList ([ExpType]::Number), 1
+    }
+    if ($a[0].type -ne ([ExpType]::Number)) {
+        return New-Object Exp -ArgumentList ([ExpType]::Number), 0
+    }
+    if ($a.length -eq 1) {
+        New-Object Exp -ArgumentList ([ExpType]::Number), 0
+    }
+    $result = $a[0].value
+    $i = 1
+    while ($i -lt $a.length) {
+        $result = [math]::floor($result / $a[$i].value)
+        $i++
+    }
+    return New-Object Exp -ArgumentList ([ExpType]::Number), $result
+}
+
 function SysDisplay($a) {
     $e = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
     foreach ($exp in $a) {
+        $e = $exp
         Write-Host [SYS] $exp
     }
     return $e

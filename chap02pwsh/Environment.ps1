@@ -18,7 +18,7 @@ class Environment {
     [void] LeaveScope() {
         foreach ($name in $($this.array.Keys)) {
             $cell = $this.array[$name]
-            if ($cell.level = $this.level) {
+            if ($cell.level -eq $this.level) {
                 $this.array[$name] = $cell.next
             }
         }
@@ -41,7 +41,7 @@ class Environment {
     }
 
     [Exp] LookUp($name) {
-        if ($this.array.containsKey("$name")) {
+        if ($this.array.containsKey($($name))) {
             $cell = $this.array["$name"]
             if ($cell -ne $null) {
                 return $cell.value
@@ -51,8 +51,8 @@ class Environment {
     }
 
     [boolean] Update($name, $value) {
-        if ($this.array.containsKey($name)) {
-            $cell = $this.array[$name]
+        if ($this.array.containsKey("$name")) {
+            $cell = $this.array["$name"]
             $cell.value = $value
             return $true
         }
