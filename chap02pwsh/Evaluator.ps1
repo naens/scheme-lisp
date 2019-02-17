@@ -1,12 +1,11 @@
 class EvaluatorException: System.Exception{
     $msg
-    EvaluatorException([string]$msg){
+    EvaluatorException($msg){
         $this.msg=$msg
     }
 }
 
 function LookUp($name, $env, $denv) {
-    Write-Host LOOKUP $name env=$env denv=$denv
     $val = $env.LookUp($name)
     if ($val -eq $null) {
         return $denv.LookUp($name)
@@ -229,7 +228,7 @@ function Evaluate($exp, $env, $denv) {
                                 $args = Eval-Args $cdr $env $denv
                                 return Call-BuiltIn $car $args
                             } elseif ($function.type -eq "[ExpType]::Function") {
-                                Invoke $function $car.cdr $env $denv
+                                return Invoke $function $car.cdr $env $denv
                             }
                         }
                         throw [EvaluatorException] "EVALUATE: Unknown Function $($car.value)"
