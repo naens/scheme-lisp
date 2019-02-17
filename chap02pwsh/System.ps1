@@ -1,6 +1,7 @@
 function Make-BuiltIn($name, $env) {
     $function = New-Object Exp -ArgumentList ([ExpType]::BuiltIn)
-    $function.defEnv = $env
+    $function.value = New-Object Fun
+    $function.value.defEnv = $env
     $env.Declare($name, $function)
 }
 

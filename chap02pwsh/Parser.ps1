@@ -9,14 +9,18 @@ Enum ExpType {
     BuiltIn
 }
 
+class Fun {
+    $defEnv
+    $params
+    $dotParam = $null
+    $body
+}
+
 class Exp {
     $type
     $value
     $car
     $cdr
-    $defEnv
-    $params
-    $dotParam
 
     Exp($type) {
         $this.type = $type

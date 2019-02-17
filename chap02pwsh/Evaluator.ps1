@@ -1,3 +1,10 @@
+class EvaluatorException: System.Exception{
+    $msg
+    EvaluatorException([string]$msg){
+        $this.msg=$msg
+    }
+}
+
 function LookUp($name, $env, $denv) {
     Write-Host LOOKUP $name env=$env denv=$denv
     $val = $env.LookUp($name)
@@ -12,18 +19,6 @@ function Update($name, $value, $env, $denv) {
         return $denv.Update($name, $value)
     }
     return $true
-}
-
-function Eval-Args($argCons, $env, $denv) {
-    $args = @()
-    $cons = $argCons
-    while ($cons.type -eq "Cons") {
-        $arg = $cons.car
-        $val = Evaluate $arg $env $denv
-        $args += $val
-        $cons = $cons.cdr
-    }
-    return $args
 }
 
 function Is-True($exp) {
@@ -117,8 +112,35 @@ function Eval-Body($body, $env, $denv) {
     return $result
 }
 
-function Invoke($function, $defEnv, $denv) {
-    # TODO: evaluate function body and return the value
+function Extend-With-Args($argCons, $function, $defEnv, $env, $denv) {
+    $funVal = $function.value
+    $params = $funVal.params
+    $dotParam = $funVal.dotParam
+    $cons = $argCons
+    $i = 0
+    while ($cons.type -eq "Cons") {
+        $arg = $cons.car
+        if ($i -ge $params.length) {
+            throw [EvaluatorException] "EXTEND-WITH-ARGS: Too many arguments given"
+        }
+        $param = $params[$i]
+        $val = Evaluate $arg $env $denv
+        $defEnv.Declare($param, $val)
+        $cons = $cons.cdr
+        $i++
+    }
+    if ($dotParam -ne $null) {
+        $defEnv.Declare($dotParam, $cons)
+    }
+}
+
+function Invoke($function, $argsExpr, $env, $denv) {
+    $defEnv = $function.value.defEnv
+    $defEnv.EnterScope
+    Extend-With-Args $argsExpr $function $defEnv $env $denv
+    $result = Eval-Body $function.value.body $defEnv $denv
+    $defEnv.LeaveScope
+    return $result
 }
 
 function Evaluate($exp, $env, $denv) {
@@ -207,38 +229,22 @@ function Evaluate($exp, $env, $denv) {
                                 $args = Eval-Args $cdr $env $denv
                                 return Call-BuiltIn $car $args
                             } elseif ($function.type -eq "[ExpType]::Function") {
-                                $args = Eval-Args $car.cdr.car $env $denv
-                                $params = $function.params
-                                $defEnv = $function.defEnv
-                                $defEnv.EnterScope
-
-                                # set params
-                                $i = 0
-                                foreach ($param in $params) {
-                                    $arg = $args[$i]
-                                    $i++
-                                }
-                                if ($args.length -ge $i) {
-                                    $function.dotParam = $args[$i..($args.Length-1)]
-                                }
-
-                                Invoke $function $defEnv $denv
-                                $defEnv.LeaveScope
+                                Invoke $function $car.cdr $env $denv
                             }
                         }
-                        # TODO: not a function throw error!!!
-                        return $null
+                        throw [EvaluatorException] "EVALUATE: Unknown Function $($car.value)"
                     }
                 }
                 return Evaluate $car.Value
             } else {
                 if ($car.Type -eq "Cons") {
                     $function = Evaluate $car $env $denv
-                    # TODO: invoke function with arguments
+                    if ($function.type -eq "[ExpType]::Function") {
+                        Invoke $function $car.cdr $env $denv
+                    }
                     return $function
                 } else {
-                    # TODO: throw here, catch in PwScheme loop
-                    return Evaluate $car $env $denv
+                    throw [EvaluatorException] "EVALUATE: Cannot evaluate to Function: $car"
                 }
             }
         }
