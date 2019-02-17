@@ -19,7 +19,13 @@ $Exps = Parse-Tokens $Tokens
 $env = Make-Global-Environment
 $denv = New-Object Environment
 $Exps | ForEach-Object {
+
     #Write-Host $_
-    $exp = Evaluate $_ $env $denv
+    try {
+        $exp = Evaluate $_ $env $denv
+    } catch [EvaluatorException] {
+        Write-Output "EvaluatorException in PwScheme loop: " $_.msg
+    }
+
     Write-Host $exp
 }
