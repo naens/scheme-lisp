@@ -15,22 +15,28 @@ function Make-Global-Environment() {
     return $globEnv
 }
 
-function Call-BuiltIn($name, $a) {
+function Call-BuiltIn($name, $argsExp, $env, $denv) {
+    $args = @()
+    $cons = $argsExp
+    while ($cons.type -eq "Cons") {
+        $args += Evaluate $cons.car $env $denv
+        $cons = $cons.cdr
+    }
     switch ($name.value) {
         "+" {
-            return SysPlus($a)
+            return SysPlus($args)
         }
         "-" {
-            return SysMinus($a)
+            return SysMinus($args)
         }
         "=" {
-            return SysEqNum($a)
+            return SysEqNum($aargs)
         }
         "EQUAL?" {
-            return SysEqual($a)
+            return SysEqual($args)
         }
         "DISPLAY" {
-            return SysDisplay($a)
+            return SysDisplay($args)
         }
     }
 }

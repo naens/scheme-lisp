@@ -225,10 +225,9 @@ function Evaluate($exp, $env, $denv) {
                         $function = LookUp $car.value $env $denv
                         if ($function -ne $null) {
                             if ($function.type -eq "BuiltIn") {
-                                $args = Eval-Args $cdr $env $denv
-                                return Call-BuiltIn $car $args
+                                return Call-BuiltIn $car $cdr $env $denv
                             } elseif ($function.type -eq "[ExpType]::Function") {
-                                return Invoke $function $car.cdr $env $denv
+                                return Invoke $function $cdr $env $denv
                             }
                         }
                         throw [EvaluatorException] "EVALUATE: Unknown Function $($car.value)"
