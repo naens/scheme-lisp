@@ -24,12 +24,12 @@ function Is-True($exp) {
     return $exp.type -eq "Boolean" -and $exp.value
 }
 
-function Eval-If($ifTail, $env, $denv) {
+function Eval-If($ifTail, $env, $denv, $tco) {
     $cond = Evaluate $ifTail.car $env $denv
     if (Is-True $cond) {
-        return Evaluate $ifTail.cdr.car $env $denv
+        return Evaluate $ifTail.cdr.car $env $denv $tco
     } elseif ($ifTail.cdr.cdr.type -eq "Cons") {
-        return Evaluate $ifTail.cdr.cdr.car $env $denv
+        return Evaluate $ifTail.cdr.cdr.car $env $denv $tco
     } else {
         return New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
     }
@@ -101,20 +101,48 @@ function Eval-Case($caseTail, $env, $denv) {
     return New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
 }
 
-function Eval-Body($body, $env, $denv) {
+function Eval-Body($body, $env, $denv, $tco0) {
     $cons = $body
     $result = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
     while ($cons.type -eq "Cons") {
-        $result = Evaluate $cons.car $env $denv
+        $tco = $tco0 -and ($cons.cdr.type -eq "Symbol")
+        Write-Host tco=$tco
+        $result = Evaluate $cons.car $env $denv $tco
         # TODO: implement TCO
         $cons = $cons.cdr
     }
     return $result
 }
 
+
+function List-To-Cons($list) {
+    #TODO: create Cons list from list of Exp
+}
+
+function Eval-Let($letTail, $env, $denv, $tco) {
+    # (let ({<var-val>}) . <body>)
+    $varvalList = $letTail.car
+    $body = $letTail.cdr
+    $args = @()
+    $params = @()
+    while ($varvalList.type -eq "Cons") {
+        $varval = $varvalList.car
+        $var = $varval.car
+        $params += $var
+        $val = Evaluate $varval.cdr.car $env $denv
+        $args += $val
+
+        $varvalList = $varvalList.cdr
+    }
+    $argsExp = List-To-Cons $args
+    $paramsExp = List-To-Cons $params
+    $function = Make-Function $env $paramsExp $body
+    return Invoke $function  $argsExpr $env $denv $tco
+}
+
 # $number: number of parameters before dot (or before nil)
 # after dot: assign cons to dotParam, evaluate car's inside
-function Eval-Args($argCons, $number, $env, $denv) {
+function Eval-Args($argCons, $number, $env, $denv, $tco) {
     $values = @()
     $i = 0
     $cons = $argCons
@@ -160,19 +188,21 @@ function Invoke($function, $argsExpr, $env, $denv, $tco) {
     $funVal = $function.value
     $params = $funVal.params
     $defEnv = $funVal.defEnv
+    Write-Host INVOKE: TCO=$tco
+    #$tco = $false
 
     if (!$tco) {
         $argList, $dotValue = Eval-Args $argsExpr $params.length $defEnv $denv
         $defEnv.EnterScope()
         Extend-With-Args $argList $dotValue $function $defEnv $denv
-        $result = Eval-Body $function.value.body $defEnv $denv
+        $result = Eval-Body $function.value.body $defEnv $denv $true
         $defEnv.LeaveScope()
     } else {
         $argList, $dotValue = Eval-Args $argsExpr $params.length $defEnv $denv
         $defEnv.LeaveScope()
         $defEnv.EnterScope()
         Extend-With-Args $argList $dotValue $function $defEnv $denv
-        $result = Eval-Body $function.value.body $defEnv $denv
+        $result = Eval-Body $function.value.body $defEnv $denv $true
     }
 
     return $result
@@ -194,7 +224,8 @@ function Make-Function($env, $paramsExp, $body) {
     return New-Object Exp -ArgumentList ([ExpType]::Function), $function
 }
 
-function Evaluate($exp, $env, $denv) {
+function Evaluate($exp, $env, $denv, $tco) {
+    #Write-Host EVALUATE: $exp $env
     switch ($Exp.Type) {
         "Number" {
             return $exp
@@ -220,22 +251,22 @@ function Evaluate($exp, $env, $denv) {
                         return $cdr.car
                     }
                     "IF" {
-                        return Eval-If $cdr $env $denv
+                        return Eval-If $cdr $env $denv $tco
                     }
                     "COND" {
-                        return Eval-Cond $cdr $env $denv
+                        return Eval-Cond $cdr $env $denv $tco
                     }
                     "CASE" {
-                        return Eval-Case $cdr $env $denv
+                        return Eval-Case $cdr $env $denv $tco
                     }
                     "AND" {
-                        return Eval-And $cdr $env $denv
+                        return Eval-And $cdr $env $denv $tco
                     }
                     "OR" {
-                        return Eval-Or $cdr $env $denv
+                        return Eval-Or $cdr $env $denv $tco
                     }
                     "BEGIN" {
-                        return Eval-Body $cdr $env $denv
+                        return Eval-Body $cdr $env $denv $tco
                     }
                     "SET!" {
                         return Update $cdr.car.value $cdr.cdr.car $env $denv
@@ -263,9 +294,10 @@ function Evaluate($exp, $env, $denv) {
                         return Make-Function $env $params $body
                     }
                     "LET" {
-                        return $cdr
+                        return Eval-Let $cdr $env $denv $tco
                     }
                     "LETREC" {
+                        # TODO
                         return $cdr
                     }
                     "DYNAMIC" {
@@ -285,7 +317,7 @@ function Evaluate($exp, $env, $denv) {
                             if ($function.type -eq "BuiltIn") {
                                 return Call-BuiltIn $car $cdr $env $denv
                             } elseif ($function.type -eq "Function") {
-                                return Invoke $function $cdr $env $denv $false
+                                    return Invoke $function $cdr $env $denv $tco
                             }
                         }
                         throw [EvaluatorException] "EVALUATE: Unknown Function $($car.value)"
@@ -296,7 +328,7 @@ function Evaluate($exp, $env, $denv) {
                 if ($car.Type -eq "Cons") {
                     $function = Evaluate $car $env $denv
                     if ($function.type -eq "Function") {
-                        return Invoke $function $cdr $env $denv $false
+                        return Invoke $function $cdr $env $denv $tco
                     }
                     throw [EvaluatorException] "EVALUATE: Cannot evaluate to Function: $car"
                 } else {
