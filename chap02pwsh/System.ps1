@@ -39,7 +39,7 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
             return SysDiv($args)
         }
         "=" {
-            return SysEqNum($aargs)
+            return SysEqNum($args)
         }
         "EQUAL?" {
             return SysEqual($args)

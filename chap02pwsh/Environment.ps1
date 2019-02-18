@@ -12,10 +12,12 @@ class Environment {
     }
 
     [void] EnterScope() {
+        Write-Host Enter Scope ($this.level) -> ($this.level+1)
         $this.level++
     }
 
     [void] LeaveScope() {
+        Write-Host Leave Scope ($this.level) -> ($this.level-1)
         foreach ($name in $($this.array.Keys)) {
             $cell = $this.array[$name]
             if ($cell.level -eq $this.level) {
@@ -27,8 +29,8 @@ class Environment {
 
     [void] Declare($name, $value) {
         #Write-Host name=$name value=$value
-        if ($this.array.containsKey($name)) {
-            $cell = $this.array[$name]
+        if ($this.array.containsKey("$name")) {
+            $cell = $this.array["$name"]
             if ($cell.level -lt $this.level) {
                 $newcell = New-Object Cell -ArgumentList $this.level, $value, $cell
                 $this.array[$name] = $newcell
@@ -41,7 +43,7 @@ class Environment {
     }
 
     [Exp] LookUp($name) {
-        if ($this.array.containsKey($($name))) {
+        if ($this.array.containsKey("$name")) {
             $cell = $this.array["$name"]
             if ($cell -ne $null) {
                 return $cell.value
@@ -62,8 +64,8 @@ class Environment {
     [string] ToString() {
         $str = ""
         $this.array.Keys | foreach-object {
-            if ($this.array.containsKey($_)) {
-                $cell = $this.array[$_]
+            if ($this.array.containsKey("$_")) {
+                $cell = $this.array["$_"]
                 $value = "$($cell.level):$($cell.value)"
             } else {
                 $value = "null"
