@@ -247,6 +247,7 @@ function Extend-With-Args($argList, $dotValue, $function, $defEnv, $denv) {
 
 function Invoke($function, $argsExp, $env, $denv, $tco) {
     $funVal = $function.value
+    Write-Host INVOKE: $function
     $params = $funVal.params
     $defEnv = $funVal.defEnv
     #Write-Host INVOKE: TCO=$tco
@@ -287,7 +288,6 @@ function Make-Function($env, $paramsExp, $body) {
 }
 
 function Evaluate($exp, $env, $denv, $tco) {
-    #Write-Host EVALUATE: $exp tco=$tco
     switch ($Exp.Type) {
         "Number" {
             return $exp
@@ -309,6 +309,12 @@ function Evaluate($exp, $env, $denv, $tco) {
             return $exp
         }
         "Boolean" {
+            return $exp
+        }
+        "Function" {
+            return $exp
+        }
+        "BuiltIn" {
             return $exp
         }
         "Cons" {
@@ -385,7 +391,7 @@ function Evaluate($exp, $env, $denv, $tco) {
                             if ($function.type -eq "BuiltIn") {
                                 return Call-BuiltIn $car $cdr $env $denv $tco
                             } elseif ($function.type -eq "Function") {
-                                    return Invoke $function $cdr $env $denv $tco
+                                return Invoke $function $cdr $env $denv $tco
                             }
                         }
                         throw [EvaluatorException] "EVALUATE: Unknown Function $($car.value)"

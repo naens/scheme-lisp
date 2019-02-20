@@ -122,6 +122,9 @@ class Exp {
                     return "<<<Function($($this.value.params)): $($this.value.body)>>>"
                 }
             }
+            "BuiltIn" {
+                return "<<<BuiltIn:$($this.value)>>>"
+            }
             default {
                 return "<<<$t>>>"
             }

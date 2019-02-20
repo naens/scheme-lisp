@@ -1,8 +1,7 @@
 function Make-BuiltIn($name, $env) {
-    $function = New-Object Exp -ArgumentList ([ExpType]::BuiltIn)
-    $function.value = New-Object Fun
-    $function.value.defEnv = $env
-    $env.Declare($name, $function)
+    $builtin = New-Object Exp -ArgumentList ([ExpType]::BuiltIn)
+    $builtin.value = $name
+    $env.Declare($name, $builtin)
 }
 
 function Make-Global-Environment() {
@@ -14,10 +13,19 @@ function Make-Global-Environment() {
     Make-BuiltIn "=" $globEnv
     Make-BuiltIn "EQUAL?" $globEnv
     Make-BuiltIn "DISPLAY" $globEnv
+    Make-BuiltIn "EVAL" $globEnv
+    Make-BuiltIn "APPLY" $globEnv
+    Make-BuiltIn "READ" $globEnv
+    Make-BuiltIn "LOAD" $globEnv
     return $globEnv
 }
 
 function Call-BuiltIn($name, $argsExp, $env, $denv) {
+    if ($name.value -eq "APPLY") {
+        $applyArgs = (Evaluate $argsExp.cdr.car $env $denv $false)
+        return SysApply $argsExp.car $applyArgs
+
+    }
     $args = @()
     $cons = $argsExp
     while ($cons.type -eq "Cons") {
@@ -27,25 +35,37 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
     }
     switch ($name.value) {
         "+" {
-            return SysPlus($args)
+            return SysPlus $args
         }
         "-" {
-            return SysMinus($args)
+            return SysMinus $args
         }
         "*" {
-            return SysMult($args)
+            return SysMult $args
         }
         "/" {
-            return SysDiv($args)
+            return SysDiv $args
         }
         "=" {
-            return SysEqNum($args)
+            return SysEqNum $args
         }
         "EQUAL?" {
-            return SysEqual($args)
+            return SysEqual $args
         }
         "DISPLAY" {
-            return SysDisplay($args)
+            return SysDisplay $args
+        }
+        "EVAL" {
+            return SysEval $args
+        }
+        "APPLY" {
+            return SysApply $args
+        }
+        "READ" {
+            return SysLoad $args $env $denv
+        }
+        "LOAD" {
+            return SysLoad $args $env $denv
         }
     }
 }
@@ -130,4 +150,49 @@ function SysEqNum($a) {
 
 function SysEqual($a) {
     return New-Object Exp -ArgumentList ([ExpType]::Boolean), (IsEqual $a[0] $a[1])
+}
+
+function SysEval($a) {
+    return Evaluate $a[0] (Make-Global-Environment) (New-Object Environment) $false
+}
+
+function SysApply($funExp, $argsExp) {
+    $function = Evaluate $funExp $env $denv $false
+    $env = Make-Global-Environment
+    $denv = New-Object Environment
+    if ($function.type -eq "BuiltIn") {
+        return Call-BuiltIn $function $argsExp $env $denv $false
+    } elseif ($function.type -eq "Function") {
+        return Invoke $function $argsExp $env $denv $false
+    }
+    return $null
+}
+
+function SysRead($a, $env, $denv) {
+    $path = $a[0]
+    # TODO: read from console
+    $text = [System.IO.File]::ReadAllText( (Resolve-Path $path) )
+    $tokens = Get-Tokens $text
+    $exps = Parse-Tokens $tokens
+    $exps | ForEach-Object {
+        try {
+            $exp = Evaluate $_ $env $denv $false
+        } catch [EvaluatorException] {
+            Write-Output ("Exception in SysLoad: " + $($_.Exception.msg))
+        }
+    }
+}
+
+function SysLoad($a, $env, $denv) {
+    $path = $a[0]
+    $text = [System.IO.File]::ReadAllText( (Resolve-Path $path) )
+    $tokens = Get-Tokens $text
+    $exps = Parse-Tokens $tokens
+    $exps | ForEach-Object {
+        try {
+            $exp = Evaluate $_ $env $denv $false
+        } catch [EvaluatorException] {
+            Write-Output ("Exception in SysLoad: " + $($_.Exception.msg))
+        }
+    }
 }
