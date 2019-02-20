@@ -288,6 +288,7 @@ function Make-Function($env, $paramsExp, $body) {
 }
 
 function Evaluate($exp, $env, $denv, $tco) {
+    #Write-Host EVALUATE: $exp
     switch ($Exp.Type) {
         "Number" {
             return $exp

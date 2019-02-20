@@ -136,7 +136,8 @@ class Exp {
 function Parse-List($Tokens, $length, $i) {
     $token = $Tokens[$i]
     $prev = $null
-    $first = $null
+    $nil = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
+    $first = $nil
     while ($i -lt $length) {
         switch ("[TokenType]::$($token.type)") {
             "[TokenType]::Dot" {
@@ -156,12 +157,11 @@ function Parse-List($Tokens, $length, $i) {
             }
             default {
                 $exp, $i = Parse-Exp $Tokens $length $i
-                $nil = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
                 $cons = New-Object Exp -ArgumentList ([ExpType]::Cons), $exp, $nil
                 if ($prev -ne $null) {
                     $prev.cdr = $cons
                 }
-                if ($first -eq $null) {
+                if ($first -eq $nil) {
                     $first = $cons
                 }
                 $prev = $cons

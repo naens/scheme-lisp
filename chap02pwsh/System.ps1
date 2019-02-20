@@ -21,6 +21,16 @@ function Make-Global-Environment() {
     Make-BuiltIn "CAR" $globEnv
     Make-BuiltIn "CDR" $globEnv
     Make-BuiltIn "LIST" $globEnv
+    Make-BuiltIn "NUMBER?" $globEnv
+    Make-BuiltIn "SYMBOL?" $globEnv
+    Make-BuiltIn "STRING?" $globEnv
+    Make-BuiltIn "CHARACTER?" $globEnv
+    Make-BuiltIn "BOOLEAN?" $globEnv
+    Make-BuiltIn "PAIR?" $globEnv
+    Make-BuiltIn "PROCEDURE?" $globEnv
+    Make-BuiltIn "NULL?" $globEnv
+    Make-BuiltIn "ZERO?" $globEnv
+    $globEnv.Declare("NIL", (New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"))
     return $globEnv
 }
 
@@ -32,6 +42,7 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
     }
     $args = @()
     $cons = $argsExp
+    #Write-Host CALL-BUILTIN $argsExp
     while ($cons.type -eq "Cons") {
         $val = Evaluate $cons.car $env $denv $false
         $args += $val
@@ -82,6 +93,33 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
         }
         "LIST" {
             return SysList $args
+        }
+        "NUMBER?" {
+            return SysIsNumber $args
+        }
+        "SYMBOL?" {
+            return SysIsSymbol $args
+        }
+        "STRING?" {
+            return SysIsString $args
+        }
+        "CHARACTER?" {
+            return SysIsCharacter $args
+        }
+        "BOOLEAN?" {
+            return SysIsBoolean $args
+        }
+        "PAIR?" {
+            return SysIsPair $args
+        }
+        "PROCEDURE?" {
+            return SysIsProcedure $args
+        }
+        "NULL?" {
+            return SysIsNull $args
+        }
+        "ZERO?" {
+            return SysIsZero $args
         }
     }
 }
@@ -232,4 +270,51 @@ function SysCDR($a) {
 
 function SysList($a) {
     return List-To-Cons($a)
+}
+
+function SysIsNumber($a) {
+    return New-Object Exp -ArgumentList ([ExpType]::Boolean), ($a[0].type -eq "Number")
+}
+
+function SysIsSymbol($a) {
+    return New-Object Exp -ArgumentList ([ExpType]::Boolean), ($a[0].type -eq "Symbol")
+}
+
+function SysIsString($a) {
+    return New-Object Exp -ArgumentList ([ExpType]::Boolean), ($a[0].type -eq "String")
+}
+
+function SysIsCharacter($a) {
+    return New-Object Exp -ArgumentList ([ExpType]::Boolean), ($a[0].type -eq "Character")
+}
+
+function SysIsBoolean($a) {
+    return New-Object Exp -ArgumentList ([ExpType]::Boolean), ($a[0].type -eq "Boolean")
+}
+
+function SysIsPair($a) {
+    return New-Object Exp -ArgumentList ([ExpType]::Boolean), ($a[0].type -eq "Pair")
+}
+
+function SysIsProcedure($a) {
+    switch ($a[0].type) {
+        "Function" {
+            $res = $true
+        }
+        "BuiltIn" {
+            $res = $true
+        }
+        default {
+            $res = false
+        }
+    }
+    return New-Object Exp -ArgumentList ([ExpType]::Boolean), $res
+}
+
+function SysIsNull($a) {
+    return New-Object Exp -ArgumentList ([ExpType]::Boolean), ($a[0].type -eq "Symbol" -and $a[0].value -eq "NIL")
+}
+
+function SysIsZero($a) {
+    return New-Object Exp -ArgumentList ([ExpType]::Boolean), ($a[0].type -eq "Number" -and $a[0].value -eq 0)
 }
