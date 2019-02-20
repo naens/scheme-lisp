@@ -389,7 +389,7 @@ function Evaluate($exp, $env, $denv, $tco) {
                         $function = LookUp ($car.value) $env $denv
                         if ($function -ne $null) {
                             if ($function.type -eq "BuiltIn") {
-                                return Call-BuiltIn $car $cdr $env $denv $tco
+                                return Call-BuiltIn $car.value $cdr $env $denv $tco
                             } elseif ($function.type -eq "Function") {
                                 return Invoke $function $cdr $env $denv $tco
                             }

@@ -17,11 +17,15 @@ function Make-Global-Environment() {
     Make-BuiltIn "APPLY" $globEnv
     Make-BuiltIn "READ" $globEnv
     Make-BuiltIn "LOAD" $globEnv
+    Make-BuiltIn "CONS" $globEnv
+    Make-BuiltIn "CAR" $globEnv
+    Make-BuiltIn "CDR" $globEnv
+    Make-BuiltIn "LIST" $globEnv
     return $globEnv
 }
 
 function Call-BuiltIn($name, $argsExp, $env, $denv) {
-    if ($name.value -eq "APPLY") {
+    if ($name -eq "APPLY") {
         $applyArgs = (Evaluate $argsExp.cdr.car $env $denv $false)
         return SysApply $argsExp.car $applyArgs
 
@@ -33,14 +37,14 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
         $args += $val
         $cons = $cons.cdr
     }
-    switch ($name.value) {
-        "+" {
+    switch -regex ($name) {
+        "\+" {
             return SysPlus $args
         }
         "-" {
             return SysMinus $args
         }
-        "*" {
+        "\*" {
             return SysMult $args
         }
         "/" {
@@ -62,10 +66,22 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
             return SysApply $args
         }
         "READ" {
-            return SysLoad $args $env $denv
+            return SysRead $args $env $denv
         }
         "LOAD" {
             return SysLoad $args $env $denv
+        }
+        "CONS" {
+            return SysCons $args
+        }
+        "CAR" {
+            return SysCAR $args
+        }
+        "CDR" {
+            return SysCDR $args
+        }
+        "LIST" {
+            return SysList $args
         }
     }
 }
@@ -169,9 +185,12 @@ function SysApply($funExp, $argsExp) {
 }
 
 function SysRead($a, $env, $denv) {
-    $path = $a[0]
-    # TODO: read from console
-    $text = [System.IO.File]::ReadAllText( (Resolve-Path $path) )
+    if ($a.length -eq 1) {
+        $msg = $a[0].value
+    } else {
+        $msg = ">"
+    }
+    $text = Read-Host $msg
     $tokens = Get-Tokens $text
     $exps = Parse-Tokens $tokens
     $exps | ForEach-Object {
@@ -181,10 +200,11 @@ function SysRead($a, $env, $denv) {
             Write-Output ("Exception in SysLoad: " + $($_.Exception.msg))
         }
     }
+    return $exp
 }
 
 function SysLoad($a, $env, $denv) {
-    $path = $a[0]
+    $path = $a[0].value
     $text = [System.IO.File]::ReadAllText( (Resolve-Path $path) )
     $tokens = Get-Tokens $text
     $exps = Parse-Tokens $tokens
@@ -195,4 +215,21 @@ function SysLoad($a, $env, $denv) {
             Write-Output ("Exception in SysLoad: " + $($_.Exception.msg))
         }
     }
+    return $exp
+}
+
+function SysCons($a) {
+    return New-Object Exp -ArgumentList ([ExpType]::Cons), $a[0], $a[1]
+}
+
+function SysCAR($a) {
+    return $a[0].car
+}
+
+function SysCDR($a) {
+    return $a[0].cdr
+}
+
+function SysList($a) {
+    return List-To-Cons($a)
 }

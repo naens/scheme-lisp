@@ -1,0 +1,6 @@
+;(cons 4 5)
+;(car '(3 4 5))
+;(cdr '(3 4 5))
+(list 'a 'b 'c 'd)
+(equal? '(1 2 3) (list 1 2 3))
+(equal? '(1 2 3) (list 1 2))
