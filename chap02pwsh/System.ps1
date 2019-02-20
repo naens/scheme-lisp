@@ -21,7 +21,7 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
     $args = @()
     $cons = $argsExp
     while ($cons.type -eq "Cons") {
-        $val = Evaluate $cons.car $env $denv
+        $val = Evaluate $cons.car $env $denv $false
         $args += $val
         $cons = $cons.cdr
     }

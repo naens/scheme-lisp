@@ -12,12 +12,12 @@ class Environment {
     }
 
     [void] EnterScope() {
-        Write-Host Enter Scope ($this.level) -> ($this.level+1)
+        #Write-Host Enter Scope ($this.level) -> ($this.level+1)
         $this.level++
     }
 
     [void] LeaveScope() {
-        Write-Host Leave Scope ($this.level) -> ($this.level-1)
+        #Write-Host Leave Scope ($this.level) -> ($this.level-1)
         foreach ($name in $($this.array.Keys)) {
             $cell = $this.array[$name]
             if ($cell.level -eq $this.level) {
