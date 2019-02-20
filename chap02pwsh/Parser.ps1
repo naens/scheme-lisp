@@ -13,6 +13,7 @@ class Fun {
     $defEnv
     $params
     $dotParam = $null
+    $isThunk = $false
     $body
 }
 
@@ -113,6 +114,13 @@ class Exp {
             "Cons" {
                 $subList = $this.MakeSublistString($this)
                 return "($subList)"
+            }
+            "Function" {
+                if ($this.value.isThunk) {
+                    return "<<<Thunk: $($this.value.body)>>>"
+                } else {
+                    return "<<<Function($($this.value.params)): $($this.value.body)>>>"
+                }
             }
             default {
                 return "<<<$t>>>"

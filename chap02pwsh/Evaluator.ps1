@@ -90,7 +90,6 @@ function Eval-Case($caseTail, $env, $denv) {
         $datumList = $pair.car
         while ($datumList.type -eq "Cons") {
             $datum = $datumList.car     # !! datum is not evaluated here
-            Write-Host EVAL-CASE datum=$datum val=$val
             if (IsEqual $val  $datum) {
                 return Eval-Body $body $env $denv
             }
@@ -106,9 +105,8 @@ function Eval-Body($body, $env, $denv, $tco0) {
     $result = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
     while ($cons.type -eq "Cons") {
         $tco = $tco0 -and ($cons.cdr.type -eq "Symbol")
-        Write-Host tco=$tco
+        #Write-Host tco=$tco
         $result = Evaluate $cons.car $env $denv $tco
-        # TODO: implement TCO
         $cons = $cons.cdr
     }
     return $result
@@ -116,7 +114,24 @@ function Eval-Body($body, $env, $denv, $tco0) {
 
 
 function List-To-Cons($list) {
-    #TODO: create Cons list from list of Exp
+    $prev = $null
+    $first = $null
+    $nil = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
+    foreach ($exp in $list) {
+        $car = $exp
+        $cons = New-Object Exp -ArgumentList ([ExpType]::Cons), $car, $nil
+        if ($prev -eq $null) {
+            $first = $cons
+        } else {
+            $prev.cdr = $cons
+        }
+        $prev = $cons
+    }
+    if ($first -eq $nil) {
+        return $nil
+    } else {
+        return $first
+    }
 }
 
 function Eval-Let($letTail, $env, $denv, $tco) {
@@ -129,15 +144,61 @@ function Eval-Let($letTail, $env, $denv, $tco) {
         $varval = $varvalList.car
         $var = $varval.car
         $params += $var
-        $val = Evaluate $varval.cdr.car $env $denv
+        $val = Evaluate $varval.cdr.car $env $denv $false
         $args += $val
-
         $varvalList = $varvalList.cdr
     }
     $argsExp = List-To-Cons $args
     $paramsExp = List-To-Cons $params
     $function = Make-Function $env $paramsExp $body
-    return Invoke $function  $argsExpr $env $denv $tco
+    return Invoke $function  $argsExp $env $denv $tco
+}
+
+function Make-Thunk($exp, $env) {
+    $function = New-Object Fun
+    $function.defEnv = $env
+    $function.params = @()
+    $function.isThunk = $true
+    $nil = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
+    $cons = New-Object Exp -ArgumentList ([ExpType]::Cons), $exp, $nil
+    $function.body = $cons
+    return New-Object Exp -ArgumentList ([ExpType]::Function), $function
+}
+
+function Eval-LetRec($letTail, $env, $denv, $tco) {
+    # (letrec ({<var-val>}) . <body>)
+    $varvalList = $letTail.car
+    $body = $letTail.cdr
+
+    $env.EnterScope()
+    $params = @()
+    $exps = @()
+    $nil = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
+    while ($varvalList.type -eq "Cons") {
+        $varval = $varvalList.car
+        $param = $varval.car.value
+        $exp = $varval.cdr.car
+        $env.Declare($param, $nil)
+        $params += $param
+        $exps += $exp
+        $varvalList = $varvalList.cdr
+    }
+    $len = $params.length
+    $i = 0
+    while ($i -lt $len) {
+        $param = $params[$i]
+        $exp = $exps[$i]
+        if ($exp.type -eq "Cons" -and $exp.car.type -eq "Symbol" -and $exp.car.value -eq "LAMBDA") {
+            $val = Evaluate $exp $env $denv $false
+        } else {
+            $val = Make-Thunk $exp $env
+        }
+        $t = Update $param $val $env $denv
+        $i++
+    }
+    $result = Eval-Body $body $env $denv $true
+    $env.LeaveScope()
+    return $result
 }
 
 # $number: number of parameters before dot (or before nil)
@@ -148,10 +209,10 @@ function Eval-Args($argCons, $number, $env, $denv, $tco) {
     $cons = $argCons
     while ($i -lt $number) {
         if ($cons.type -ne "Cons") {
-            throw [EvaluatorException] "EXTEND-WITH-ARGS: Not enough arguments"
+            throw [EvaluatorException] "EVAL-ARGS: Not enough arguments"
         }
         $arg = $cons.car
-        $val = Evaluate $arg $env $denv
+        $val = (Evaluate $arg $env $denv $false)
         $values += $val
         $cons = $cons.cdr
         $i++
@@ -161,7 +222,7 @@ function Eval-Args($argCons, $number, $env, $denv, $tco) {
     if ($cons.type -eq "Cons") {
         $dotParam = $cons
         while ($cons.type -eq "Cons") {
-            $cons.car = Evaluate $cons.car $env $denv
+            $cons.car = (Evaluate $cons.car $env $denv $false)
             $cons = $cons.cdr
         }
     }
@@ -184,21 +245,21 @@ function Extend-With-Args($argList, $dotValue, $function, $defEnv, $denv) {
     }
 }
 
-function Invoke($function, $argsExpr, $env, $denv, $tco) {
+function Invoke($function, $argsExp, $env, $denv, $tco) {
     $funVal = $function.value
     $params = $funVal.params
     $defEnv = $funVal.defEnv
-    Write-Host INVOKE: TCO=$tco
+    #Write-Host INVOKE: TCO=$tco
     #$tco = $false
 
     if (!$tco) {
-        $argList, $dotValue = Eval-Args $argsExpr $params.length $defEnv $denv
+        $argList, $dotValue = Eval-Args $argsExp $params.length $defEnv $denv
         $defEnv.EnterScope()
         Extend-With-Args $argList $dotValue $function $defEnv $denv
         $result = Eval-Body $function.value.body $defEnv $denv $true
         $defEnv.LeaveScope()
     } else {
-        $argList, $dotValue = Eval-Args $argsExpr $params.length $defEnv $denv
+        $argList, $dotValue = Eval-Args $argsExp $params.length $defEnv $denv
         $defEnv.LeaveScope()
         $defEnv.EnterScope()
         Extend-With-Args $argList $dotValue $function $defEnv $denv
@@ -211,6 +272,7 @@ function Invoke($function, $argsExpr, $env, $denv, $tco) {
 function Make-Function($env, $paramsExp, $body) {
     $function = New-Object Fun
     $function.defEnv = $env
+    $function.isThunk = $false
     $function.params = @()
     $paramsCons = $paramsExp
     while ($paramsCons.type -eq "Cons") {
@@ -225,13 +287,20 @@ function Make-Function($env, $paramsExp, $body) {
 }
 
 function Evaluate($exp, $env, $denv, $tco) {
-    #Write-Host EVALUATE: $exp $env
+    #Write-Host EVALUATE: $exp tco=$tco
     switch ($Exp.Type) {
         "Number" {
             return $exp
         }
         "Symbol" {
-            return LookUp $exp.value $env $denv
+            $result =  LookUp $exp.value $env $denv
+            if ($result.type -eq "Function" -and $result.value.isThunk) {
+                Write-Host THUNK!
+                $noArgs = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
+                $result = Invoke $result $noArgs $env $denv $false
+                Update $exp.value $result $env $denv
+            }
+            return $result
         }
         "String" {
             return $exp
@@ -269,12 +338,12 @@ function Evaluate($exp, $env, $denv, $tco) {
                         return Eval-Body $cdr $env $denv $tco
                     }
                     "SET!" {
-                        return Update $cdr.car.value $cdr.cdr.car $env $denv
+                        return Update $cdr.car.value (Evaluate $cdr.cdr.car $env $denv $false) $env $denv
                     }
                     "DEFINE" {
                         if ($cdr.car.Type -eq "Symbol") {
                             $name = $cdr.car.Value
-                            $value = Evaluate $cdr.cdr.car $env $denv
+                            $value = Evaluate $cdr.cdr.car $env $denv $false
                             $env.Declare($name, $value)
                             return $value
                         } else {
@@ -297,13 +366,12 @@ function Evaluate($exp, $env, $denv, $tco) {
                         return Eval-Let $cdr $env $denv $tco
                     }
                     "LETREC" {
-                        # TODO
-                        return $cdr
+                        return Eval-LetRec $cdr $env $denv $tco
                     }
                     "DYNAMIC" {
                         if ($cdr.car.Type -eq "Symbol") {
                             $name = $cdr.car.Value
-                            $value = Evaluate $cdr.cdr.car $env $denv
+                            $value = Evaluate $cdr.cdr.car $env $denv $false
                             $denv.Declare($name, $value)
                             return $value
                         } else {
@@ -312,10 +380,10 @@ function Evaluate($exp, $env, $denv, $tco) {
                         }
                     }
                     default {
-                        $function = LookUp $($car.value) $env $denv
+                        $function = LookUp ($car.value) $env $denv
                         if ($function -ne $null) {
                             if ($function.type -eq "BuiltIn") {
-                                return Call-BuiltIn $car $cdr $env $denv
+                                return Call-BuiltIn $car $cdr $env $denv $tco
                             } elseif ($function.type -eq "Function") {
                                     return Invoke $function $cdr $env $denv $tco
                             }
@@ -323,10 +391,10 @@ function Evaluate($exp, $env, $denv, $tco) {
                         throw [EvaluatorException] "EVALUATE: Unknown Function $($car.value)"
                     }
                 }
-                return Evaluate $car.Value
+                throw [EvaluatorException] "EVALUATE: Unknown Error in $exp"
             } else {
                 if ($car.Type -eq "Cons") {
-                    $function = Evaluate $car $env $denv
+                    $function = Evaluate $car $env $denv $false
                     if ($function.type -eq "Function") {
                         return Invoke $function $cdr $env $denv $tco
                     }
