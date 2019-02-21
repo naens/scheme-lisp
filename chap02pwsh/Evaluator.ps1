@@ -212,6 +212,7 @@ function Eval-Args($argCons, $number, $env, $denv, $tco) {
             throw [EvaluatorException] "EVAL-ARGS: Not enough arguments"
         }
         $arg = $cons.car
+        #Write-Host EVAL-ARGS: arg=$arg
         $val = (Evaluate $arg $env $denv $false)
         $values += $val
         $cons = $cons.cdr
@@ -221,12 +222,14 @@ function Eval-Args($argCons, $number, $env, $denv, $tco) {
     # evaluate after dot
     if ($cons.type -eq "Cons") {
         $dotParam = $cons
+        #Write-Host EVAL-ARGS: dotParam=$dotParam
         while ($cons.type -eq "Cons") {
             $cons.car = (Evaluate $cons.car $env $denv $false)
             $cons = $cons.cdr
         }
+        return @($values, $dotParam)
     }
-    return @($values, $dotValue)
+    return @($values, $cons)        # set to dotParam whatever is left in the last cdr...
 }
 
 function Extend-With-Args($argList, $dotValue, $function, $defEnv, $denv) {
@@ -247,21 +250,21 @@ function Extend-With-Args($argList, $dotValue, $function, $defEnv, $denv) {
 
 function Invoke($function, $argsExp, $env, $denv, $tco) {
     $funVal = $function.value
-    #Write-Host INVOKE: $function
     $params = $funVal.params
     $defEnv = $funVal.defEnv
     #Write-Host INVOKE: TCO=$tco
     #$tco = $false
 
     $denv.EnterScope()
+    #Write-Host INVOKE: function=$function params=$params [($params.length)] arguments=$argsExp
+    $argList, $dotValue = Eval-Args $argsExp $params.length $defEnv $denv
+    #Write-Host INVOKE: argList=$argList dotValue=$dotValue
     if (!$tco) {
-        $argList, $dotValue = Eval-Args $argsExp $params.length $defEnv $denv
         $defEnv.EnterScope()
         Extend-With-Args $argList $dotValue $function $defEnv $denv
         $result = Eval-Body $function.value.body $defEnv $denv $true
         $defEnv.LeaveScope()
     } else {
-        $argList, $dotValue = Eval-Args $argsExp $params.length $defEnv $denv
         $defEnv.LeaveScope()
         $defEnv.EnterScope()
         Extend-With-Args $argList $dotValue $function $defEnv $denv

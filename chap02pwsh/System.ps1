@@ -20,6 +20,7 @@ function Make-Global-Environment() {
     Make-BuiltIn "CONS" $globEnv
     Make-BuiltIn "CAR" $globEnv
     Make-BuiltIn "CDR" $globEnv
+    Make-BuiltIn "NOT" $globEnv
     Make-BuiltIn "LIST" $globEnv
     Make-BuiltIn "NUMBER?" $globEnv
     Make-BuiltIn "SYMBOL?" $globEnv
@@ -42,7 +43,7 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
     }
     $args = @()
     $cons = $argsExp
-    #Write-Host CALL-BUILTIN $argsExp
+    #Write-Host CALL-BUILTIN name=$name argsExp=$argsExp
     while ($cons.type -eq "Cons") {
         $val = Evaluate $cons.car $env $denv $false
         $args += $val
@@ -90,6 +91,9 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
         }
         "CDR" {
             return SysCDR $args
+        }
+        "NOT" {
+            return SysNot $args
         }
         "LIST" {
             return SysList $args
@@ -179,6 +183,7 @@ function SysDiv($a) {
 }
 
 function SysDisplay($a) {
+    #Write-Host SYSDISPLAY: $a
     $e = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
     foreach ($exp in $a) {
         $e = $exp
@@ -266,6 +271,14 @@ function SysCAR($a) {
 
 function SysCDR($a) {
     return $a[0].cdr
+}
+
+function SysNot($a) {
+    $value = $a[0]
+    if ($value.type -eq "Boolean" -and $value.value -eq $true) {
+        return New-Object Exp -ArgumentList ([ExpType]::Boolean), $false
+    }
+    return New-Object Exp -ArgumentList ([ExpType]::Boolean), $true
 }
 
 function SysList($a) {

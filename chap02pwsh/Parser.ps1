@@ -79,18 +79,24 @@ class Exp {
     }
 
     [string] MakeSublistString($cons) {
+        if ($cons.car -eq $null) {
+            $carString = "null"
+        } else {
+            $carString = $cons.car.ToString()
+        }
         if ($cons.cdr.type -eq "Cons") {
             $restString = $this.MakeSublistString($cons.cdr)
-            return $cons.car.ToString() + " " + $restString
+            return $carString + " " + $restString
         } if ($cons.cdr.type -eq "Symbol" -and $cons.cdr.value -eq "NIL") {
-            return $cons.car.ToString()
+            return $carString
         } else {
-            return $cons.car.ToString() + " . " + $cons.cdr.ToString()
+            return $carString + " . " + $cons.cdr.ToString()
         }
     }
 
     [string] ToString() {
         [ExpType]$t = $this.type
+        #write-Host t=$t
         switch ($t) {
             "Number" {
                 return $this.value
@@ -119,6 +125,7 @@ class Exp {
                 if ($this.value.isThunk) {
                     return "<<<Thunk: $($this.value.body)>>>"
                 } else {
+                    # TODO: display dot parameter
                     return "<<<Function($($this.value.params)): $($this.value.body)>>>"
                 }
             }
