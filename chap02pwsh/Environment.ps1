@@ -61,6 +61,20 @@ class Environment {
         return $false
     }
 
+    [boolean] UpdateDynamic($name, $value) {
+        if ($this.array.containsKey("$name")) {
+            $cell = $this.array["$name"]
+            if ($cell.level -eq $this.level) {
+                $cell.value = $value
+            } else {
+                $newcell = New-Object Cell -ArgumentList $this.level, $value, $cell
+                $this.array[$name] = $newcell
+            }
+            return $true
+        }
+        return $false
+    }
+
     [string] ToString() {
         $str = ""
         $this.array.Keys | foreach-object {

@@ -23,7 +23,7 @@ $Exps | ForEach-Object {
     #Write-Host $_
     try {
         $exp = Evaluate $_ $env $denv $false
-        Write-Host EVALUATED TO: $exp
+        #Write-Host EVALUATED TO: $exp
     } catch [EvaluatorException] {
         Write-Output ("EvaluatorException in PwScheme loop: " + $($_.Exception.msg))
     }

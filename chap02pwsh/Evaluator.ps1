@@ -15,7 +15,7 @@ function LookUp($name, $env, $denv) {
 
 function Update($name, $value, $env, $denv) {
     if (!$env.Update($name, $value)) {
-        return $denv.Update($name, $value)
+        return $denv.UpdateDynamic($name, $value)
     }
     return $true
 }
@@ -247,12 +247,13 @@ function Extend-With-Args($argList, $dotValue, $function, $defEnv, $denv) {
 
 function Invoke($function, $argsExp, $env, $denv, $tco) {
     $funVal = $function.value
-    Write-Host INVOKE: $function
+    #Write-Host INVOKE: $function
     $params = $funVal.params
     $defEnv = $funVal.defEnv
     #Write-Host INVOKE: TCO=$tco
     #$tco = $false
 
+    $denv.EnterScope()
     if (!$tco) {
         $argList, $dotValue = Eval-Args $argsExp $params.length $defEnv $denv
         $defEnv.EnterScope()
@@ -266,6 +267,7 @@ function Invoke($function, $argsExp, $env, $denv, $tco) {
         Extend-With-Args $argList $dotValue $function $defEnv $denv
         $result = Eval-Body $function.value.body $defEnv $denv $true
     }
+    $denv.LeaveScope()
 
     return $result
 }
