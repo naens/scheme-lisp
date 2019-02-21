@@ -10,6 +10,10 @@ function Make-Global-Environment() {
     Make-BuiltIn "-" $globEnv
     Make-BuiltIn "*" $globEnv
     Make-BuiltIn "/" $globEnv
+    Make-BuiltIn ">" $globEnv
+    Make-BuiltIn ">=" $globEnv
+    Make-BuiltIn "<" $globEnv
+    Make-BuiltIn "<=" $globEnv
     Make-BuiltIn "=" $globEnv
     Make-BuiltIn "EQUAL?" $globEnv
     Make-BuiltIn "DISPLAY" $globEnv
@@ -61,6 +65,18 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
         }
         "/" {
             return SysDiv $args
+        }
+        ">" {
+            return SysGTNum $args
+        }
+        ">=" {
+            return SysGENum $args
+        }
+        "<" {
+            return SysLTNum $args
+        }
+        "<=" {
+            return SysLENum $args
         }
         "=" {
             return SysEqNum $args
@@ -200,6 +216,26 @@ function IsEqual($exp1, $exp2) {
         return (IsEqual $exp1.car $exp2.car) -and (IsEqual $exp1.cdr $exp2.cdr)
     }
     return $exp1.value -eq $exp2.value
+}
+
+function SysGTNum($a) {
+    $val = $a[0].type -eq ([ExpType]::Number) -and $a[0].type -eq $a[1].type -and $a[0].value -gt $a[1].value
+    return New-Object Exp -ArgumentList ([ExpType]::Boolean), $val
+}
+
+function SysGENum($a) {
+    $val = $a[0].type -eq ([ExpType]::Number) -and $a[0].type -eq $a[1].type -and $a[0].value -ge $a[1].value
+    return New-Object Exp -ArgumentList ([ExpType]::Boolean), $val
+}
+
+function SysLTNum($a) {
+    $val = $a[0].type -eq ([ExpType]::Number) -and $a[0].type -eq $a[1].type -and $a[0].value -lt $a[1].value
+    return New-Object Exp -ArgumentList ([ExpType]::Boolean), $val
+}
+
+function SysLENum($a) {
+    $val = $a[0].type -eq ([ExpType]::Number) -and $a[0].type -eq $a[1].type -and $a[0].value -le $a[1].value
+    return New-Object Exp -ArgumentList ([ExpType]::Boolean), $val
 }
 
 function SysEqNum($a) {
