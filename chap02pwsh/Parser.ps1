@@ -102,6 +102,9 @@ class Exp {
                 return $this.value
             }
             "Symbol" {
+                if ($this.value -eq "NIL") {
+                    return "'()"
+                }
                 return $this.value
             }
             "String" {

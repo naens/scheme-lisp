@@ -16,7 +16,8 @@ function Make-Global-Environment() {
     Make-BuiltIn "<=" $globEnv
     Make-BuiltIn "=" $globEnv
     Make-BuiltIn "EQUAL?" $globEnv
-    Make-BuiltIn "DISPLAY" $globEnv
+    Make-BuiltIn "WRITE" $globEnv
+    Make-BuiltIn "WRITELN" $globEnv
     Make-BuiltIn "EVAL" $globEnv
     Make-BuiltIn "APPLY" $globEnv
     Make-BuiltIn "READ" $globEnv
@@ -84,8 +85,11 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
         "EQUAL?" {
             return SysEqual $args
         }
-        "DISPLAY" {
-            return SysDisplay $args
+        "WRITE$" {
+            return SysWrite $args
+        }
+        "WRITELN" {
+            return SysWriteLn $args
         }
         "EVAL" {
             return SysEval $args
@@ -198,13 +202,22 @@ function SysDiv($a) {
     return New-Object Exp -ArgumentList ([ExpType]::Number), $result
 }
 
-function SysDisplay($a) {
-    #Write-Host SYSDISPLAY: $a
+function SysWrite($a) {
     $e = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
     foreach ($exp in $a) {
         $e = $exp
-        Write-Host [SYS] $exp
+        Write-Host -NoNewline $exp
     }
+    return $e
+}
+
+function SysWriteLn($a) {
+    $e = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
+    foreach ($exp in $a) {
+        $e = $exp
+        Write-Host -NoNewline $exp
+    }
+    Write-Host ""
     return $e
 }
 
@@ -326,7 +339,7 @@ function SysIsNumber($a) {
 }
 
 function SysIsSymbol($a) {
-    return New-Object Exp -ArgumentList ([ExpType]::Boolean), ($a[0].type -eq "Symbol")
+    return New-Object Exp -ArgumentList ([ExpType]::Boolean), ($a[0].type -eq "Symbol" -and $a[0].value -ne "NIL")
 }
 
 function SysIsString($a) {

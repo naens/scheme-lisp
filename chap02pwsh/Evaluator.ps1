@@ -115,8 +115,8 @@ function Eval-Body($body, $env, $denv, $tco0) {
 
 function List-To-Cons($list) {
     $prev = $null
-    $first = $null
     $nil = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
+    $first = $nil
     foreach ($exp in $list) {
         $car = $exp
         $cons = New-Object Exp -ArgumentList ([ExpType]::Cons), $car, $nil
@@ -127,11 +127,7 @@ function List-To-Cons($list) {
         }
         $prev = $cons
     }
-    if ($first -eq $nil) {
-        return $nil
-    } else {
-        return $first
-    }
+    return $first
 }
 
 function Eval-Let($letTail, $env, $denv, $tco) {
