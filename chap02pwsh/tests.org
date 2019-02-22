@@ -1,0 +1,42 @@
+#+TITLE: Test for PowerScheme
+
+* Expressions
+ * Arithmetic expressions
+ * Type check
+ * Logical expressions, comparisons
+ * Lists and Cons (lists and trees)
+
+* Global scope variables
+ * dynamic, lexical variables
+ * declaration, updates
+
+* Global scope functions
+ * dynamic and lexical scope
+ * let
+ * recursion
+ * mutual recursion
+
+* Top-level
+ * let
+ * lambda expressions application
+ * eval and apply
+
+* Local functions
+ * local define
+ * letrec
+ * closures and captured environment
+
+* Dynamic variables
+ * Find some tests in books or online
+
+* Higher-order functions
+ * pass function names and lambda expressions
+ * function objects: implement counter as function
+
+* Y-Combinator
+
+* Continuations
+
+* Simple REPL
+
+* Scheme interpreter from Lisp in Small Pieces
