@@ -96,7 +96,7 @@ class Exp {
 
     [string] ToString() {
         [ExpType]$t = $this.type
-        #write-Host t=$t
+        #Write-Host TOSTRING t=$t
         switch ($t) {
             "Number" {
                 return $this.value
@@ -126,14 +126,15 @@ class Exp {
             }
             "Function" {
                 if ($this.value.isThunk) {
-                    return "<<<Thunk: $($this.value.body)>>>"
+                    return "#<Thunk: $($this.value.body)>"
                 } else {
                     # TODO: display dot parameter
-                    return "<<<Function($($this.value.params)): $($this.value.body)>>>"
+                    return "#<Function($($this.value.params)): $($this.value.body)>"
                 }
             }
             "BuiltIn" {
-                return "<<<BuiltIn:$($this.value)>>>"
+                #Write-Host TOSTRING $($this.value)
+                return "#<BuiltIn:$($this.value)>"
             }
             default {
                 return "<<<$t>>>"

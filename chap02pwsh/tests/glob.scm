@@ -88,3 +88,31 @@
 
 (writeln (odd '(1 2 3 4 5)))
 ; (1 3 5)
+
+
+
+;; lambda expressions application
+(writeln ((lambda (a b) (+ (* a 10) b)) 3 4))
+; 34
+
+;; eval and apply
+(writeln (eval '(+ 15 (* 7 8))))
+; 71
+
+(writeln (eval writeln))
+; #<procedure:writeln>
+
+(writeln (eval fact))
+; #<procedure:fact>
+
+(apply writeln '("Hello, World!"))
+; "Hello, World!"
+
+(writeln (apply + '(5 10)))
+; 15
+
+(writeln (apply (lambda (a b) (+ (* a 10) b)) '(3 4)))
+; 34
+
+(writeln (apply fact '(5)))
+; 120
