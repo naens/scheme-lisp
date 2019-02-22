@@ -35,8 +35,10 @@ function Make-Global-Environment() {
     Make-BuiltIn "PAIR?" $globEnv
     Make-BuiltIn "PROCEDURE?" $globEnv
     Make-BuiltIn "NULL?" $globEnv
+    Make-BuiltIn "EMPTY?" $globEnv
     Make-BuiltIn "ZERO?" $globEnv
     $globEnv.Declare("NIL", (New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"))
+    $globEnv.Declare("EMPTY", (New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"))
     return $globEnv
 }
 
@@ -54,14 +56,14 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
         $args += $val
         $cons = $cons.cdr
     }
-    switch -regex ($name) {
-        "\+" {
+    switch ($name) {
+        "+" {
             return SysPlus $args
         }
         "-" {
             return SysMinus $args
         }
-        "\*" {
+        "*" {
             return SysMult $args
         }
         "/" {
@@ -85,7 +87,7 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
         "EQUAL?" {
             return SysEqual $args
         }
-        "WRITE$" {
+        "WRITE" {
             return SysWrite $args
         }
         "WRITELN" {
@@ -140,6 +142,9 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
             return SysIsProcedure $args
         }
         "NULL?" {
+            return SysIsNull $args
+        }
+        "EMPTY?" {
             return SysIsNull $args
         }
         "ZERO?" {
