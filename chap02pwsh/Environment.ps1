@@ -19,6 +19,7 @@ class Environment {
     [void] LeaveScope() {
         #Write-Host Leave Scope ($this.level) -> ($this.level-1)
         foreach ($name in $($this.array.Keys)) {
+            # TODO: if name becomes empty, remove?
             $cell = $this.array[$name]
             if ($cell.level -eq $this.level) {
                 $this.array[$name] = $cell.next
@@ -53,8 +54,10 @@ class Environment {
     }
 
     [boolean] Update($name, $value) {
+        #Write-Host $this
         if ($this.array.containsKey("$name")) {
             $cell = $this.array["$name"]
+            #Write-Host name=$name cell=$cell
             $cell.value = $value
             return $true
         }

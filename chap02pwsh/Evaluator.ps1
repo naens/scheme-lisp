@@ -192,7 +192,9 @@ function Eval-LetRec($letTail, $env, $denv, $tco) {
         $t = Update $param $val $env $denv
         $i++
     }
+    #$env.EnterScope()
     $result = Eval-Body $body $env $denv $true
+    #$env.LeaveScope()
     $env.LeaveScope()
     return $result
 }
@@ -208,7 +210,6 @@ function Eval-Args($argCons, $number, $env, $denv, $tco) {
             throw [EvaluatorException] "EVAL-ARGS: Not enough arguments"
         }
         $arg = $cons.car
-        #Write-Host EVAL-ARGS: arg=$arg
         $val = (Evaluate $arg $env $denv $false)
         $values += $val
         $cons = $cons.cdr
@@ -218,7 +219,6 @@ function Eval-Args($argCons, $number, $env, $denv, $tco) {
     # evaluate after dot
     if ($cons.type -eq "Cons") {
         $dotParam = $cons
-        #Write-Host EVAL-ARGS: dotParam=$dotParam
         while ($cons.type -eq "Cons") {
             $cons.car = (Evaluate $cons.car $env $denv $false)
             $cons = $cons.cdr
@@ -249,20 +249,16 @@ function Invoke($function, $argsExp, $env, $denv, $tco) {
     $params = $funVal.params
     $defEnv = $funVal.defEnv
     #Write-Host INVOKE: TCO=$tco
-    #$tco = $false
+    $tco = $false
 
     $denv.EnterScope()
-    #Write-Host INVOKE: function=$function params=$params [($params.length)] arguments=$argsExp
     $argList, $dotValue = Eval-Args $argsExp $params.length $defEnv $denv
-    #Write-Host INVOKE: argList=$argList dotValue=$dotValue
     if (!$tco) {
         $defEnv.EnterScope()
         Extend-With-Args $argList $dotValue $function $defEnv $denv
         $result = Eval-Body $function.value.body $defEnv $denv $true
         $defEnv.LeaveScope()
     } else {
-        $defEnv.LeaveScope()
-        $defEnv.EnterScope()
         Extend-With-Args $argList $dotValue $function $defEnv $denv
         $result = Eval-Body $function.value.body $defEnv $denv $true
     }
@@ -289,7 +285,6 @@ function Make-Function($env, $paramsExp, $body) {
 }
 
 function Evaluate($exp, $env, $denv, $tco) {
-    #Write-Host EVALUATE: $exp
     switch ($Exp.Type) {
         "Number" {
             return $exp
@@ -297,7 +292,6 @@ function Evaluate($exp, $env, $denv, $tco) {
         "Symbol" {
             $result =  LookUp $exp.value $env $denv
             if ($result.type -eq "Function" -and $result.value.isThunk) {
-                Write-Host THUNK!
                 $noArgs = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
                 $result = Invoke $result $noArgs $env $denv $false
                 Update $exp.value $result $env $denv
