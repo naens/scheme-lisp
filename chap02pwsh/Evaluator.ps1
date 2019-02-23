@@ -353,7 +353,7 @@ function Evaluate($exp, $env, $denv, $tco) {
                             $name = $cdr.car.Value
                             $value = Evaluate $cdr.cdr.car $env $denv $false
                             $env.Declare($name, $value)
-                            return $value
+                            return $null
                         } else {
                             # (define (<name> . <params>) <body>)
                             $name = $cdr.car.car.value
@@ -361,7 +361,7 @@ function Evaluate($exp, $env, $denv, $tco) {
                             $body = $cdr.cdr
                             $function = (Make-Function $env $params $body)
                             $env.Declare($name, $function)
-                            return $function
+                            return $null
                         }
                     }
                     "LAMBDA" {

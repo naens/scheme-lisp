@@ -37,6 +37,9 @@ function Make-Global-Environment() {
     Make-BuiltIn "NULL?" $globEnv
     Make-BuiltIn "EMPTY?" $globEnv
     Make-BuiltIn "ZERO?" $globEnv
+    Make-BuiltIn "EXIT" $globEnv
+    Make-BuiltIn "BYE" $globEnv
+    Make-BuiltIn "QUIT" $globEnv
     $globEnv.Declare("NIL", (New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"))
     $globEnv.Declare("EMPTY", (New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"))
     return $globEnv
@@ -150,6 +153,15 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
         "ZERO?" {
             return SysIsZero $args
         }
+        "EXIT" {
+            return SysExit
+        }
+        "BYE" {
+            return SysBye
+        }
+        "QUIT" {
+            return SysQuit
+        }
     }
 }
 
@@ -213,7 +225,7 @@ function SysWrite($a) {
         $e = $exp
         Write-Host -NoNewline $exp
     }
-    return $e
+    return $null
 }
 
 function SysWriteLn($a) {
@@ -223,7 +235,7 @@ function SysWriteLn($a) {
         Write-Host -NoNewline $exp
     }
     Write-Host ""
-    return $e
+    return $null
 }
 
 function IsEqual($exp1, $exp2) {
@@ -385,4 +397,15 @@ function SysIsNull($a) {
 
 function SysIsZero($a) {
     return New-Object Exp -ArgumentList ([ExpType]::Boolean), ($a[0].type -eq "Number" -and $a[0].value -eq 0)
+}
+
+class ExitException1: System.Exception{
+    $msg
+    ExitException1($msg){
+        $this.msg=$msg
+    }
+}
+
+function SysExit() {
+    throw [ExitException1] "EXIT"
 }
