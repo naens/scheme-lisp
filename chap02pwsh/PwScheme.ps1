@@ -1,5 +1,8 @@
 # PowerScheme, Scheme interpreter written in PowerShell
 
+# TODO: check naming conventions for variables, functions and methods
+# TODO: create exampleS(!) with stack branching: test value modification, extends, draw stack tree!!!
+
 $scriptPath = split-path -parent $MyInvocation.MyCommand.Definition
 
 . "$scriptPath\Tokenizer.ps1"

@@ -9,30 +9,53 @@
 ; 121
 
 ;(letrec ((fib (lambda (n)
-;               (if (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))))))
+;               (if (< n 2)
+;                n
+;                (+ (fib (- n 1))
+;                   (fib (- n 2)))))))
 ;  (fib 7))
 ; 13
 
-;(let ((c 0))
-; (define (ic k)
-;  (set! c (+ c k))
-;  (writeln c))
-; (ic 1)
-; (ic 4)
-; (ic 9))
+;(letrec ((fact (lambda (n)
+;               (if (< n 2) n (* n (fact (- n 1)))))))
+;  (writeln (fact 7)))
+; 6
+
+;(letrec ((even
+;           (lambda (lst)
+;            (cond
+;             ((empty? lst) empty)
+;             (else (cons (car lst) (odd (cdr lst)))))))
+;         (odd
+;           (lambda (lst)
+;            (cond
+;             ((empty? lst) empty)
+;             (else (even (cdr lst)))))))
+;  (writeln (even '(1 2 3 4 5)))
+;  (writeln (odd '(1 2 3 4 5))))
+; (2 4)
+; (1 3 5)
+
+(let ((c 0))
+ (define (ic k)
+  (set! c (+ c k))
+  (writeln c))
+ (ic 1)
+ (ic 4)
+ (ic 9))
 ; 1
 ; 5
 ; 14
 
-(define (counter)
- (let ((c 0))
-  (lambda (cmd)
-   (case cmd
-     ((inc) (set! c (+ c 1)))
-     ((dec) (set! c (- c 1)))
-     ((pr) (writeln c))))))
-(define cnt (counter))
-(cnt 'pr)
+;(define (counter)
+; (let ((c 0))
+;  (lambda (cmd)
+;   (case cmd
+;     ((inc) (set! c (+ c 1)))
+;     ((dec) (set! c (- c 1)))
+;     ((pr) (writeln c))))))
+;(define cnt (counter))
+;(cnt 'pr)
 ; 0
 
 ; (cnt 'inc)
