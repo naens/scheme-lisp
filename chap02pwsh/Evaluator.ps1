@@ -79,7 +79,6 @@ function Eval-Or($tail, $env, $denv) {
 
 function Eval-Case($caseTail, $env, $denv) {
     $val = Evaluate $caseTail.car $env $denv
-    Write-Host EVAL-CASE val=$val
     $c = $caseTail.cdr
     while ($c.type -eq "Cons" -and $c.car.type -eq "Cons") {
         $pair = $c.car     # (cons ({<datum>}) . <body>)
@@ -268,7 +267,7 @@ function Invoke($function, $argsExp, $env, $denv, $tco) {
 
 function Make-Function($env, $paramsExp, $body) {
     $function = New-Object Fun
-    $function.defEnv = $env
+    $function.defEnv = $env.Duplicate()
     $function.isThunk = $false
     $function.params = @()
     $paramsCons = $paramsExp

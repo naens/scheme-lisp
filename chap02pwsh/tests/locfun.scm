@@ -56,29 +56,29 @@
 ; 5
 ; 14
 
-(define (counter)
+(define (counter n)
  (let ((c 0))
   (lambda (cmd)
    (case cmd
-     ((inc) (set! c (+ c 1)))
-     ((dec) (set! c (- c 1)))
+     ((inc) (set! c (+ c n)))
+     ((dec) (set! c (- c n)))
      ((pr) (writeln c))))))
-(define cnt (counter))
+(define cnt (counter 3))
 (cnt 'pr)
 ; 0
 
 (cnt 'inc)
 (cnt 'pr)
-; 1
+; 3
 
 (cnt 'inc)
 (cnt 'inc)
 (cnt 'pr)
-; 3
+; 9
 
 (cnt 'dec)
 (cnt 'pr)
-; 2
+; 6
 
 (cnt 'dec)
 (cnt 'dec)
