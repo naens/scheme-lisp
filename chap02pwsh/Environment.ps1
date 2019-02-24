@@ -28,6 +28,7 @@ class Environment {
         $this.level--
     }
 
+    # declares a new variable, but can also update if it already exists
     [void] Declare($name, $value) {
         #Write-Host name=$name value=$value
         if ($this.array.containsKey("$name")) {
@@ -54,14 +55,40 @@ class Environment {
     }
 
     [boolean] Update($name, $value) {
-        #Write-Host $this
         if ($this.array.containsKey("$name")) {
             $cell = $this.array["$name"]
-            #Write-Host name=$name cell=$cell
             $cell.value = $value
             return $true
         }
         return $false
+    }
+
+    [void] PrintEnv() {
+        Write-Host "---BEGIN-ENV---" level=$($this.level)
+        foreach ($k in 1..$this.level) {
+            Write-Host -NoNewline "$k."
+            foreach ($key in $this.array.Keys) {
+                $cell = $this.array["$key"]
+                if ($cell.level -gt 0) {
+                    $value = $cell.valueAt($k)
+                    if ($value -eq $null) {
+                        Write-Host -NoNewline $(" ".PadLeft(8,' '))":"$(" ".PadRight(8,' '))
+                    } else {
+                        if ($cell.value.type -eq "Function") {
+                            $cellString = "#<fun:$($cell.value.value)>"
+                        } elseif ($cell.value.type -eq "BuiltIn") {
+                            $cellString = "#<bin:$($cell.value.value)>"
+                        } else {
+                            $cellString = $cell.valueAt($k).ToString()
+                        }
+                        Write-Host -NoNewline $($key.PadLeft(8,' '))":"$($cellString.PadRight(8,' '))
+                    }
+                }
+            }
+            Write-Host
+        }
+        Write-Host "----END-ENV----"
+        Write-Host
     }
 
     [boolean] UpdateDynamic($name, $value) {
@@ -97,6 +124,16 @@ class Cell {
     $level
     $value
     $next
+
+    [Exp] valueAt($k) {
+        if ($k -eq $this.level) {
+            return $this.value
+        }
+        if ($this.next -ne $null) {
+            return $this.next.valueAt($k)
+        }
+        return $null
+    }
 
     Cell($level, $value, $next) {
         $this.level = $level

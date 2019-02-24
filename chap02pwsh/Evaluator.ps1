@@ -192,11 +192,7 @@ function Eval-LetRec($letTail, $env, $denv, $tco) {
         $t = Update $param $val $env $denv
         $i++
     }
-    # Evaluate the body in its own scope, so (var val) bindings are not lost during $tco
-    $env.EnterScope()
-    # here the $tco is true because it's in its own scope
     $result = Eval-Body $body $env $denv $true
-    $env.LeaveScope()
     $env.LeaveScope()
     return $result
 }
@@ -261,10 +257,7 @@ function Invoke($function, $argsExp, $env, $denv, $tco) {
         $result = Eval-Body $function.value.body $defEnv $denv $true
         $defEnv.LeaveScope()
     } else {
-        # TODO: letrec fib: leave/enter scope destroys fib -> better solution?
-        # TODO: let-with-counter example -> why does not work?
-        $defEnv.LeaveScope()
-        $defEnv.EnterScope()
+        # do not invoke enter/leave scope here
         Extend-With-Args $argList $dotValue $function $defEnv $denv
         $result = Eval-Body $function.value.body $defEnv $denv $true
     }
@@ -291,6 +284,7 @@ function Make-Function($env, $paramsExp, $body) {
 }
 
 function Evaluate($exp, $env, $denv, $tco) {
+    #Write-Host EVALUATE: $exp
     switch ($Exp.Type) {
         "Number" {
             return $exp
