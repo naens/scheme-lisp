@@ -5,12 +5,12 @@
 
 $scriptPath = split-path -parent $MyInvocation.MyCommand.Definition
 
-. "$scriptPath\Tokenizer.ps1"
-. "$scriptPath\Parser.ps1"
-. "$scriptPath\Evaluator.ps1"
-. "$scriptPath\Environment.ps1"
-. "$scriptPath\System.ps1"
-. "$scriptPath\Bag.ps1"
+. (Join-Path -Path $scriptPath -ChildPath "Tokenizer.ps1")
+. (Join-Path -Path $scriptPath -ChildPath "Parser.ps1")
+. (Join-Path -Path $scriptPath -ChildPath "Evaluator.ps1")
+. (Join-Path -Path $scriptPath -ChildPath "Environment.ps1")
+. (Join-Path -Path $scriptPath -ChildPath "System.ps1")
+. (Join-Path -Path $scriptPath -ChildPath "Bag.ps1")
 
 $env = Make-Global-Environment
 $denv = New-Object Environment
