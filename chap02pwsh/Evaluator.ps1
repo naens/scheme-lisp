@@ -99,7 +99,29 @@ function Eval-Case($caseTail, $env, $denv) {
     return New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
 }
 
+function Define-Defines($body, $env) {
+    $cons = $body
+    while ($cons.type -eq "Cons") {
+        $element = $cons.car
+        $car = $element.car
+        $cdr = $element.cdr
+        if ($car.type -eq "Symbol" -and $car.value -eq "DEFINE" -and $cdr.type -eq "Cons") {
+            $cadr = $cdr.car
+            if ($cadr.type -eq "Symbol") {
+                $name = $cadr.value
+            } elseif ($cadr.type -eq "Cons" -and $cadr.car.type -eq "Symbol") {
+                $name = $cadr.car.value
+            } else {
+                throw [EvaluatorException] "DEFINE-DEFINES: could not read define: $element"
+            }
+            $env.Declare($name, $null)
+        }
+        $cons = $cons.cdr
+    }
+}
+
 function Eval-Body($body, $env, $denv, $tco0) {
+    Define-Defines $body $env
     $cons = $body
     $result = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
     while ($cons.type -eq "Cons") {
@@ -246,13 +268,15 @@ function Invoke($function, $argsExp, $env, $denv, $tco) {
     $params = $funVal.params
     $defEnv = $funVal.defEnv
     #Write-Host INVOKE: TCO=$tco
-    #$tco = $false
+    $tco = $false
 
     $denv.EnterScope()
-    $argList, $dotValue = Eval-Args $argsExp $params.length $defEnv $denv
+    $argList, $dotValue = Eval-Args $argsExp $params.length $env $denv
+    #$env.PrintEnv()
     if (!$tco) {
         $defEnv.EnterScope()
         Extend-With-Args $argList $dotValue $function $defEnv $denv
+        #$defEnv.PrintEnv()
         $result = Eval-Body $function.value.body $defEnv $denv $true
         $defEnv.LeaveScope()
     } else {
@@ -265,9 +289,9 @@ function Invoke($function, $argsExp, $env, $denv, $tco) {
     return $result
 }
 
-function Make-Function($env, $paramsExp, $body) {
+function Make-Function($name, $env, $paramsExp, $body) {
     $function = New-Object Fun
-    $function.defEnv = $env.Duplicate()
+    $function.defEnv = $env.Duplicate($name)
     $function.isThunk = $false
     $function.params = @()
     $paramsCons = $paramsExp
@@ -284,6 +308,8 @@ function Make-Function($env, $paramsExp, $body) {
 
 function Evaluate($exp, $env, $denv, $tco) {
     #Write-Host EVALUATE: $exp
+    #Write-Host $env
+    #$env.PrintEnv()
     switch ($Exp.Type) {
         "Number" {
             return $exp
@@ -336,7 +362,10 @@ function Evaluate($exp, $env, $denv, $tco) {
                         return Eval-Or $cdr $env $denv $tco
                     }
                     "BEGIN" {
-                        return Eval-Body $cdr $env $denv $tco
+                        $env.EnterScope
+                        $result = Eval-Body $cdr $env $denv $tco
+                        $env.LeaveScope
+                        return $result
                     }
                     "SET!" {
                         return Update $cdr.car.value (Evaluate $cdr.cdr.car $env $denv $false) $env $denv
@@ -352,8 +381,10 @@ function Evaluate($exp, $env, $denv, $tco) {
                             $name = $cdr.car.car.value
                             $params = $cdr.car.cdr
                             $body = $cdr.cdr
-                            $function = (Make-Function $env $params $body)
+                            $function = (Make-Function $name $env $params $body)
                             $env.Declare($name, $function)
+                            #Write-Host declare $name $function
+                            #Write-Host $env
                             return $null
                         }
                     }
@@ -386,9 +417,13 @@ function Evaluate($exp, $env, $denv, $tco) {
                             if ($function.type -eq "BuiltIn") {
                                 return Call-BuiltIn $car.value $cdr $env $denv $tco
                             } elseif ($function.type -eq "Function") {
+                                #Write-Host EVALUATE: Invoke $exp
                                 return Invoke $function $cdr $env $denv $tco
                             }
                         }
+                        #Write-HOST EVALUATE: COULD NOT FIND FUNCTION WHILE EVALUATING $exp
+                        #Write-Host $env
+                        #$env.PrintEnv()
                         throw [EvaluatorException] "EVALUATE: Unknown Function $($car.value)"
                     }
                 }

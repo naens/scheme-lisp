@@ -13,8 +13,8 @@ $scriptPath = split-path -parent $MyInvocation.MyCommand.Definition
 . (Join-Path -Path $scriptPath -ChildPath "Bag.ps1")
 
 $env = Make-Global-Environment
-$denv = New-Object Environment
-
+$denv = New-Object Environment -ArgumentList "dynamic"
+#$env.EnterScope()
 if ($args.length -eq 1) {
     $Path = $args[0]
     $Text = [System.IO.File]::ReadAllText( (Resolve-Path $Path) )
@@ -32,7 +32,6 @@ if ($args.length -eq 1) {
         Write-Host $exp
     }
 } else {
-
     $exit = $false
     $bag = New-Object Bag
     while (-not $exit) {
@@ -62,3 +61,4 @@ if ($args.length -eq 1) {
         }
     }
 }
+#$env.LeaveScope()

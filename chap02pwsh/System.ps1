@@ -5,7 +5,7 @@ function Make-BuiltIn($name, $env) {
 }
 
 function Make-Global-Environment() {
-    $globEnv = New-Object Environment
+    $globEnv = New-Object Environment -ArgumentList "global"
     Make-BuiltIn "+" $globEnv
     Make-BuiltIn "-" $globEnv
     Make-BuiltIn "*" $globEnv
