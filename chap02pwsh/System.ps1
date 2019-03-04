@@ -278,14 +278,14 @@ function SysEqual($a) {
 }
 
 function SysEval($a) {
-    return Evaluate $a[0] (Make-Global-Environment) (New-Object Environment) $false
+    return Evaluate $a[0] (Make-Global-Environment) (New-Object Environment "#<eval>") $false
 }
 
 function SysApply($funExp, $argsExp) {
     # Write-Host SYSAPPLY fun=$funExp args=$argsExp
     $function = Evaluate $funExp $env $denv $false
     $env = Make-Global-Environment
-    $denv = New-Object Environment
+    $denv = New-Object Environment "#<apply>"
     if ($function.type -eq "BuiltIn") {
         return Call-BuiltIn $function.value $argsExp $env $denv $false
     } elseif ($function.type -eq "Function") {

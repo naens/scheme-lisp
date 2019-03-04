@@ -1,11 +1,11 @@
 ;;; variables
 (define y 5)
 (writeln y)
-; 4
+; 5
 
 (define t "abcde")
 (writeln t)
-; "abcd"
+; "abcde"
 
 
 (writeln 'functions)
@@ -73,15 +73,15 @@
 
 
 (writeln 'mutual-recursion)
-(define (even lst)
- (cond
-  ((empty? lst) empty)
-  (else (cons (car lst) (odd (cdr lst))))))
-
 (define (odd lst)
  (cond
   ((empty? lst) empty)
-  (else (even (cdr lst)))))
+  (else (cons (car lst) (even (cdr lst))))))
+
+(define (even lst)
+ (cond
+  ((empty? lst) empty)
+  (else (odd (cdr lst)))))
 
 (writeln (even '(1 2 3 4 5)))
 ; (2 4)

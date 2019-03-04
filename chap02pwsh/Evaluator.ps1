@@ -167,7 +167,7 @@ function Eval-Let($letTail, $env, $denv, $tco) {
     }
     $argsExp = List-To-Cons $args
     $paramsExp = List-To-Cons $params
-    $function = Make-Function $env $paramsExp $body
+    $function = Make-Function "#<let>" $env $paramsExp $body
     return Invoke $function  $argsExp $env $denv $tco
 }
 
@@ -368,7 +368,11 @@ function Evaluate($exp, $env, $denv, $tco) {
                         return $result
                     }
                     "SET!" {
-                        return Update $cdr.car.value (Evaluate $cdr.cdr.car $env $denv $false) $env $denv
+                        $res = Evaluate $cdr.cdr.car $env $denv $false
+                        if (Update $cdr.car.value $res $env $denv) {
+                            return $res
+                        }
+                        return $null
                     }
                     "DEFINE" {
                         if ($cdr.car.Type -eq "Symbol") {
@@ -383,8 +387,6 @@ function Evaluate($exp, $env, $denv, $tco) {
                             $body = $cdr.cdr
                             $function = (Make-Function $name $env $params $body)
                             $env.Declare($name, $function)
-                            #Write-Host declare $name $function
-                            #Write-Host $env
                             return $null
                         }
                     }
@@ -392,7 +394,7 @@ function Evaluate($exp, $env, $denv, $tco) {
                         # (lambda <params> . <body>)
                         $params = $cdr.car
                         $body = $cdr.cdr
-                        return Make-Function $env $params $body
+                        return Make-Function "#<lambda>" $env $params $body
                     }
                     "LET" {
                         return Eval-Let $cdr $env $denv $tco
@@ -405,11 +407,9 @@ function Evaluate($exp, $env, $denv, $tco) {
                             $name = $cdr.car.Value
                             $value = Evaluate $cdr.cdr.car $env $denv $false
                             $denv.Declare($name, $value)
-                            return $value
-                        } else {
-                            # no functions for dynamic scope
-                            return New-Object Exp -ArgumentList [ExpType]::Symbol, "NIL"
                         }
+                        # no functions for dynamic scope
+                        return $null
                     }
                     default {
                         $function = LookUp ($car.value) $env $denv

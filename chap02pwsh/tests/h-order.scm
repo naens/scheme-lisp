@@ -3,6 +3,7 @@
         (#t (cons (f (car l)) (map (cdr l) f)))))
 
 (define (div2 x) (/ x 2))
+; 4
 
 (writeln (div2 8))
 

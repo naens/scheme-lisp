@@ -80,8 +80,20 @@ class Environment {
     }
 
     [boolean] Update($name, $value) {
+        #Write-Host UPDATE: name=$name value=$value
+        #$this.PrintEnv()
         if ($this.local_array.containsKey("$name")) {
-            $cell = $this.array["$name"]
+            $cell = $this.local_array["$name"]
+        #    $c = $cell
+        #    while ($c -ne $null) {
+        #        if ($c.value -eq $null) {
+        #            $str = "NULL"
+        #        } else {
+        #            $str = $c.value.ToString()
+        #        }
+        #        Write-Host c: level=$($c.level): $str
+        #        $c = $c.next
+        #    }
             $cell.value = $value
             return $true
         }

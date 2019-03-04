@@ -1,57 +1,60 @@
-;(let ((sum (lambda (a b) (+ a b))))
-; (writeln (sum 100 10)))
+(let ((sum (lambda (a b) (+ a b))))
+ (writeln (sum 100 10)))
 ; 110
 
-;(letrec ((f (lambda (x) (+ (g (+ x 1)) 1)))
-;         (g (lambda (x) (* x 10)))
-;         (x (g 4)))
-;  (writeln (+ x (f 7))))    ; (+ (g 4) (+ (g 8) 1)) = (+ 40 (+ 80 1)) = 121
+(letrec ((f (lambda (x) (+ (g (+ x 1)) 1)))
+         (g (lambda (x) (* x 10)))
+         (x (g 4)))
+  (writeln (+ x (f 7))))    ; (+ (g 4) (+ (g 8) 1)) = (+ 40 (+ 80 1)) = 121
 ; 121
 
-;(letrec ((fib (lambda (n)
-;               (if (< n 2)
-;                n
-;                (+ (fib (- n 1))
-;                   (fib (- n 2)))))))
-;  (writeln (fib 7)))
+(letrec ((fib (lambda (n)
+               (if (< n 2)
+                n
+                (+ (fib (- n 1))
+                   (fib (- n 2)))))))
+  (writeln (fib 7)))
 ; 13
 
-;(letrec ((fact (lambda (n)
-;               (if (< n 2) n (* n (fact (- n 1)))))))
-;  (writeln (fact 5)))
+(letrec ((fact (lambda (n)
+               (if (< n 2) n (* n (fact (- n 1)))))))
+  (writeln (fact 5)))
 ; 120
 
-;(letrec ((even
-;           (lambda (lst)
-;            (cond
-;             ((empty? lst) empty)
-;             (else (cons (car lst) (odd (cdr lst)))))))
-;         (odd
-;           (lambda (lst)
-;            (cond
-;             ((empty? lst) empty)
-;             (else (even (cdr lst)))))))
-;  (writeln (even '(0 1 2 3 4 5)))
-;  (writeln (odd '(0 1 2 3 4 5))))
+(letrec ((even
+           (lambda (lst)
+            (cond
+             ((empty? lst) empty)
+             (else (cons (car lst) (odd (cdr lst)))))))
+         (odd
+           (lambda (lst)
+            (cond
+             ((empty? lst) empty)
+             (else (even (cdr lst)))))))
+  (writeln (even '(0 1 2 3 4 5)))
+  (writeln (odd '(0 1 2 3 4 5))))
 ; (0 2 4)
 ; (1 3 5)
 
-;(define (f c)
-; (define (ic k)
-;  (set! c (+ c k))
-;  (writeln c))
-; (ic 1)
-; (ic 4)
-; (ic 9))
-;(f 0)
+(define (f c)
+ (define (ic k)
+  (set! c (+ c k))
+  (writeln c))
+ (ic 1)
+ (ic 4)
+ (ic 9))
+(f 0)
+; 1
+; 5
+; 14
 
-;(let ((c 0))
-; (define (ic k)
-;  (set! c (+ c k))
-;  (writeln c))
-; (ic 1)
-; (ic 4)
-; (ic 9))
+(let ((c 0))
+ (define (ic k)
+  (set! c (+ c k))
+  (writeln c))
+ (ic 1)
+ (ic 4)
+ (ic 9))
 ; 1
 ; 5
 ; 14
