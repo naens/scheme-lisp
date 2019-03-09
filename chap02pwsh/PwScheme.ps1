@@ -24,6 +24,8 @@ if ($args.length -eq 1) {
     $Exps | ForEach-Object {
         try {
             $exp = Evaluate $_ $env $denv $false
+        } catch [ExitException1] {
+            Write-Output "EXIT invoked"
         } catch [EvaluatorException] {
             Write-Output ("EvaluatorException in PwScheme loop: " + $($_.Exception.msg))
         }
