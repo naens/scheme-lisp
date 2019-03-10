@@ -14,7 +14,6 @@ $scriptPath = split-path -parent $MyInvocation.MyCommand.Definition
 
 $env = Make-Global-Environment
 $denv = New-Object Environment -ArgumentList "dynamic"
-#$env.EnterScope()
 if ($args.length -eq 1) {
     $Path = $args[0]
     $Text = [System.IO.File]::ReadAllText( (Resolve-Path $Path) )
@@ -63,4 +62,3 @@ if ($args.length -eq 1) {
         }
     }
 }
-#$env.LeaveScope()
