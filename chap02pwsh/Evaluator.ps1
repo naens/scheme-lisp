@@ -407,8 +407,16 @@ function Evaluate($exp, $env, $denv, $tco) {
                             $name = $cdr.car.Value
                             $value = Evaluate $cdr.cdr.car $env $denv $false
                             $denv.Declare($name, $value)
+                        } else {
+                            # dynamic scope function: (dynamic (<name> . <params>) <body>)
+                            $name = $cdr.car.car.value
+                            $params = $cdr.car.cdr
+                            $body = $cdr.cdr
+                            $function = (Make-Function $name $env $params $body)
+                            $denv.Declare($name, $function)
+                            return $null
+
                         }
-                        # no functions for dynamic scope
                         return $null
                     }
                     default {
