@@ -374,19 +374,24 @@ function Evaluate($exp, $env, $denv, $tco) {
                         }
                         return $null
                     }
-                    "DEFINE" {
+                    { "DEFINE" -or "DYNAMIC" } {
+                        if ($_ -eq "DEFINE") {
+                            $declEnv = $env
+                        } else {
+                            $declEnv = $denv
+                        }
                         if ($cdr.car.Type -eq "Symbol") {
                             $name = $cdr.car.Value
                             $value = Evaluate $cdr.cdr.car $env $denv $false
-                            $env.Declare($name, $value)
+                            $declEnv.Declare($name, $value)
                             return $null
                         } else {
-                            # (define (<name> . <params>) <body>)
+                            # (define/dynamic (<name> . <params>) <body>)
                             $name = $cdr.car.car.value
                             $params = $cdr.car.cdr
                             $body = $cdr.cdr
                             $function = (Make-Function $name $env $params $body)
-                            $env.Declare($name, $function)
+                            $declEnv.Declare($name, $function)
                             return $null
                         }
                     }
@@ -401,23 +406,6 @@ function Evaluate($exp, $env, $denv, $tco) {
                     }
                     "LETREC" {
                         return Eval-LetRec $cdr $env $denv $tco
-                    }
-                    "DYNAMIC" {
-                        if ($cdr.car.Type -eq "Symbol") {
-                            $name = $cdr.car.Value
-                            $value = Evaluate $cdr.cdr.car $env $denv $false
-                            $denv.Declare($name, $value)
-                        } else {
-                            # dynamic scope function: (dynamic (<name> . <params>) <body>)
-                            $name = $cdr.car.car.value
-                            $params = $cdr.car.cdr
-                            $body = $cdr.cdr
-                            $function = (Make-Function $name $env $params $body)
-                            $denv.Declare($name, $function)
-                            return $null
-
-                        }
-                        return $null
                     }
                     default {
                         $function = LookUp ($car.value) $env $denv
