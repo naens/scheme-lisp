@@ -10,7 +10,7 @@ class Environment {
     }
 
     [Environment] Duplicate($name) {
-        $result = New-Object Environment $name
+        $result = New-Object Environment -ArgumentList $name
         $result.level = $this.level
         #Write-Host Duplicate: name=$name
         $result.global_array = $this.global_array

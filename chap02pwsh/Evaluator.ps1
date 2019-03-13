@@ -374,7 +374,7 @@ function Evaluate($exp, $env, $denv, $tco) {
                         }
                         return $null
                     }
-                    { "DEFINE" -or "DYNAMIC" } {
+                    { $_ -eq "DEFINE" -or $_ -eq "DYNAMIC" } {
                         if ($_ -eq "DEFINE") {
                             $declEnv = $env
                         } else {
