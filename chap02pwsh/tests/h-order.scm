@@ -3,9 +3,13 @@
         (#t (cons (f (car l)) (map (cdr l) f)))))
 
 (define (div2 x) (/ x 2))
-; 4
+
+(let ((n 4))
+ (writeln (map '(4 80 1200) (lambda (x) (/ x n)))))
+; (1 20 300)
 
 (writeln (div2 8))
+; 4
 
 (writeln (map '(2 4 6 8) div2))
 ; (1 2 3 4)
