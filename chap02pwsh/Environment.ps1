@@ -50,13 +50,24 @@ class Environment {
             if ($cell.level -lt $this.level) {
                 $newcell = New-Object Cell -ArgumentList $this.level, $value, $cell
                 $this.local_array[$name] = $newcell
-            }
-            else {
+            } else {
                 # useful for situations when the name is first declared as $null and is set later
                 $cell.value = $value
             }
         } elseif ($this.global_array.containsKey("$name")) {
             $this.global_array[$name] = $value
+        } else {
+            if ($this.level -eq 0) {
+                $this.global_array[$name] = $value
+            } else {
+                $this.local_array[$name] = New-Object Cell -ArgumentList $this.level, $value, $null
+            }
+        }
+    }
+
+    [void] DeclareDynamic($name, $value) {
+        if ($this.local_array.containsKey("$name") -or $this.global_array.containsKey("$name")) {
+            $this.UpdateDynamic($name, $value)
         } else {
             if ($this.level -eq 0) {
                 $this.global_array[$name] = $value

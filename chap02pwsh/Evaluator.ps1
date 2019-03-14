@@ -391,7 +391,7 @@ function Evaluate($exp, $env, $denv, $tco) {
                             $params = $cdr.car.cdr
                             $body = $cdr.cdr
                             $function = (Make-Function $name $env $params $body)
-                            $declEnv.Declare($name, $function)
+                            $declEnv.DeclareDynamic($name, $function)
                             return $null
                         }
                     }
