@@ -20,6 +20,7 @@ function Make-Global-Environment() {
     Make-BuiltIn "WRITELN" $globEnv
     Make-BuiltIn "EVAL" $globEnv
     Make-BuiltIn "APPLY" $globEnv
+    Make-BuiltIn "CRASH" $globEnv
     Make-BuiltIn "READ" $globEnv
     Make-BuiltIn "LOAD" $globEnv
     Make-BuiltIn "CONS" $globEnv
@@ -99,8 +100,8 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
         "EVAL" {
             return SysEval $args
         }
-        "APPLY" {
-            return SysApply $args
+        "CRASH" {
+            return SysCrash $args
         }
         "READ" {
             return SysRead $args $env $denv
@@ -294,6 +295,11 @@ function SysApply($funExp, $argsExp) {
     return $null
 }
 
+function SysCrash($args) {
+    Evaluate $args[0] $env $denv $false
+    throw [ExitException] "CRASH"
+}
+
 function SysRead($a, $env, $denv) {
     if ($a.length -eq 1) {
         $msg = $a[0].value
@@ -399,13 +405,13 @@ function SysIsZero($a) {
     return New-Object Exp -ArgumentList ([ExpType]::Boolean), ($a[0].type -eq "Number" -and $a[0].value -eq 0)
 }
 
-class ExitException1: System.Exception{
+class ExitException: System.Exception{
     $msg
-    ExitException1($msg){
+    ExitException($msg){
         $this.msg=$msg
     }
 }
 
 function SysExit() {
-    throw [ExitException1] "EXIT"
+    throw [ExitException] "EXIT"
 }
