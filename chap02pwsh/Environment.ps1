@@ -54,7 +54,7 @@ class Environment {
                 # useful for situations when the name is first declared as $null and is set later
                 $cell.value = $value
             }
-        } elseif ($this.global_array.containsKey("$name")) {
+        } elseif ($this.level -eq 0 -and $this.global_array.containsKey("$name")) { #TODO: test "$this.level -eq 0"
             $this.global_array[$name] = $value
         } else {
             if ($this.level -eq 0) {
@@ -95,16 +95,6 @@ class Environment {
         #$this.PrintEnv()
         if ($this.local_array.containsKey("$name")) {
             $cell = $this.local_array["$name"]
-        #    $c = $cell
-        #    while ($c -ne $null) {
-        #        if ($c.value -eq $null) {
-        #            $str = "NULL"
-        #        } else {
-        #            $str = $c.value.ToString()
-        #        }
-        #        Write-Host c: level=$($c.level): $str
-        #        $c = $c.next
-        #    }
             $cell.value = $value
             return $true
         }
@@ -168,7 +158,7 @@ class Environment {
     }
 
     [string] ToString() {
-        $str = ""
+        $str = "`n`tGLOBAL_ARRAY"
         $this.global_array.Keys | foreach-object {
             if ($this.global_array.containsKey("$_")) {
                 $value = $this.global_array["$_"]
@@ -177,6 +167,7 @@ class Environment {
             }
             $str += "[$($_):$value]"
         }
+        $str += "`n`tLOCAL_ARRAY"
         $this.local_array.Keys | foreach-object {
             if ($this.local_array.containsKey("$_")) {
                 $cell = $this.local_array["$_"]
@@ -186,7 +177,7 @@ class Environment {
             }
             $str += "[$($_):$value]"
         }
-        return "{env:level=$($this.level),array=$str}"
+        return "{env:level=$($this.level),array:$str}"
     }
 }
 

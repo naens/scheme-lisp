@@ -37,3 +37,19 @@
 
 (writeln (list 'top y))
 ; (TOP 3)
+
+; dynamic scope test
+(dynamic a1 1)
+(dynamic (fn1 b)
+  (list a1 b))
+(let ((a1 2))
+ (writeln (fn1 3)))
+; (2 3)
+
+; same thing in lexical scope
+(define a2 1)
+(define (fn2 b)
+  (list a2 b))
+(let ((a2 2))
+ (writeln (fn2 3)))
+; (1 3)

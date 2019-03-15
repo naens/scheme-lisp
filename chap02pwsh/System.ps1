@@ -10,7 +10,7 @@ function Make-Global-Environment() {
     Make-BuiltIn "-" $globEnv
     Make-BuiltIn "*" $globEnv
     Make-BuiltIn "/" $globEnv
-    Make-BuiltIn "modulo" $globEnv
+    Make-BuiltIn "MODULO" $globEnv
     Make-BuiltIn ">" $globEnv
     Make-BuiltIn ">=" $globEnv
     Make-BuiltIn "<" $globEnv
@@ -74,7 +74,7 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
         "/" {
             return SysDiv $args
         }
-        "modulo" {
+        "MODULO" {
             return SysModulo $args
         }
         ">" {

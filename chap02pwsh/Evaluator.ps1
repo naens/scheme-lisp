@@ -20,6 +20,19 @@ function Update($name, $value, $env, $denv) {
     return $true
 }
 
+function IsDynamic($name, $env, $denv) {
+    $val = $env.LookUp($name)
+    if ($val -eq $null) {
+        if ($denv.LookUp($name) -eq $null) {
+            return $false
+        } else {
+            return $true
+        }
+    } else {
+        return $false
+    }
+}
+
 function Is-True($exp) {
     return $exp.type -eq "Boolean" -and $exp.value
 }
@@ -255,7 +268,15 @@ function Extend-With-Args($argList, $dotValue, $function, $defEnv, $denv) {
     while ($i -lt $params.length) {
         $arg = $argList[$i]
         $param = $params[$i]
-        $defEnv.Declare($param, $arg)
+        if (IsDynamic $param $defEnv $denv) {
+            #Write-Host $param is dynamic value $arg
+            $denv.DeclareDynamic($param, $arg)
+        } else {
+            #Write-Host $param is not dynamic value $arg
+            #Write-Host $defEnv
+            $defEnv.Declare($param, $arg)
+            #Write-Host $defEnv
+        }
         $i++
     }
     if ($dotParam -ne $null) {
@@ -270,6 +291,7 @@ function Invoke($function, $argsExp, $env, $denv, $tco) {
     #Write-Host INVOKE: TCO=$tco
     $tco = $false
 
+    #Write-Host $defEnv
     $denv.EnterScope()
     $argList, $dotValue = Eval-Args $argsExp $params.length $env $denv
     #$env.PrintEnv()
