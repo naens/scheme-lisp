@@ -51,7 +51,7 @@ if ($args.length -eq 1) {
             #Write-Host exp = $exp
             try {
                 $result = Evaluate $exp $env $denv $false
-            } catch [ExitException1] {
+            } catch [ExitException] {
                 $exit = $true
                 $result = $null
             } catch [EvaluatorException] {

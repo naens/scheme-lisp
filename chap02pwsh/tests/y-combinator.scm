@@ -10,8 +10,8 @@
    1
    (* n (f (- n 1))))))
 
-((fix meta-fact) 3)
+(writeln ((fix meta-fact) 3))
 ; 6
 
-((fix meta-fact) 10)
+(writeln ((fix meta-fact) 10))
 ; 3628800
