@@ -10,6 +10,7 @@ function Make-Global-Environment() {
     Make-BuiltIn "-" $globEnv
     Make-BuiltIn "*" $globEnv
     Make-BuiltIn "/" $globEnv
+    Make-BuiltIn "modulo" $globEnv
     Make-BuiltIn ">" $globEnv
     Make-BuiltIn ">=" $globEnv
     Make-BuiltIn "<" $globEnv
@@ -72,6 +73,9 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
         }
         "/" {
             return SysDiv $args
+        }
+        "modulo" {
+            return SysModulo $args
         }
         ">" {
             return SysGTNum $args
@@ -218,6 +222,13 @@ function SysDiv($a) {
         $i++
     }
     return New-Object Exp -ArgumentList ([ExpType]::Number), $result
+}
+
+function SysModulo($a) {
+    if ($a.length -ne 2) {
+        return $null
+    }
+    return New-Object Exp -ArgumentList ([ExpType]::Number), ($a[0].value % $a[1].value)
 }
 
 function SysWrite($a) {

@@ -411,15 +411,11 @@ function Evaluate($exp, $env, $denv, $tco) {
                         $function = LookUp ($car.value) $env $denv
                         if ($function -ne $null) {
                             if ($function.type -eq "BuiltIn") {
-                                return Call-BuiltIn $car.value $cdr $env $denv $tco
+                                return Call-BuiltIn $function.value $cdr $env $denv $tco
                             } elseif ($function.type -eq "Function") {
-                                #Write-Host EVALUATE: Invoke $exp
                                 return Invoke $function $cdr $env $denv $tco
                             }
                         }
-                        #Write-HOST EVALUATE: COULD NOT FIND FUNCTION WHILE EVALUATING $exp
-                        #Write-Host $env
-                        #$env.PrintEnv()
                         throw [EvaluatorException] "EVALUATE: Unknown Function $($car.value)"
                     }
                 }

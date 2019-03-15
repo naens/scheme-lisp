@@ -35,3 +35,35 @@
 
 (writeln (fact 4))
 ; 24
+
+
+(define (fold-if l fold-fun filter-fun base-val)
+  (cond ((null? l) base-val)
+        ((filter-fun (car l))
+         (fold-fun (car l)
+                   (fold-if (cdr l) fold-fun filter-fun base-val)))
+        (else
+         (fold-if (cdr l) fold-fun filter-fun base-val))))
+
+(writeln (fold-if '(1 2 3 4 5 6 7 8 9 10)
+                  *
+                  (lambda (x) (= (modulo x 3) 0))
+                  1))
+; 162
+(fold-if '(9) * (lambda (x) (= (modulo x 3) 0)) 1)
+
+(define (fn f c)
+  (+ (f 5) c))
+
+(writeln (fn (lambda (x) (* x 100)) 3))
+; 503
+
+
+(define (make-multiplier n)
+  (lambda (x)
+    (* x n)))
+
+(let ((mul5 (make-multiplier 5))
+      (mul2 (make-multiplier 2)))
+  (writeln (+ (mul5 6) (mul2 4))))
+; 38
