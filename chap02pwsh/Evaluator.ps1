@@ -112,34 +112,11 @@ function Eval-Case($caseTail, $env, $denv) {
     return New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
 }
 
-#function Define-Defines($body, $env) {
-#    $cons = $body
-#    while ($cons.type -eq "Cons") {
-#        $element = $cons.car
-#        $car = $element.car
-#        $cdr = $element.cdr
-#        if ($car.type -eq "Symbol" -and $car.value -eq "DEFINE" -and $cdr.type -eq "Cons") {
-#            $cadr = $cdr.car
-#            if ($cadr.type -eq "Symbol") {
-#                $name = $cadr.value
-#            } elseif ($cadr.type -eq "Cons" -and $cadr.car.type -eq "Symbol") {
-#                $name = $cadr.car.value
-#            } else {
-#                throw [EvaluatorException] "DEFINE-DEFINES: could not read define: $element"
-#            }
-#            $env.Declare($name, $null)
-#        }
-#        $cons = $cons.cdr
-#    }
-#}
-
 function Eval-Body($body, $env, $denv, $tco0) {
-    #Define-Defines $body $env
     $cons = $body
     $result = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
     while ($cons.type -eq "Cons") {
         $tco = $tco0 -and ($cons.cdr.type -eq "Symbol")
-        #Write-Host tco=$tco
         $result = Evaluate $cons.car $env $denv $tco
         $cons = $cons.cdr
     }
