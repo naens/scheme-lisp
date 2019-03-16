@@ -26,20 +26,24 @@ class Environment {
     [void] LeaveScope() {
         #Write-Host Leave Scope name=$($this.name) ($this.level) -> ($this.level-1)
         $nullCells = @()
+        #Write-Host A level=$($this.level) $this.ArrayToString($this.local_array)
         foreach ($name in $($this.local_array.Keys)) {
             $cell = $this.local_array[$name]
             if ($cell.level -eq $this.level) {
                 $this.local_array[$name] = $cell.next
-            }
-            if ($cell -eq $null) {
-                $nullCells += $name
+                if ($cell.next -eq $null) {
+                    $nullCells += $name
+                }
             }
         }
         # if name becomes empty, remove?
         foreach ($name in $nullCells) {
             $this.local_array.Remove($name)
+            #Write-Host LEAVE-SCOPE: "NULL_CELL: $name"
+            #$this.local_array[$name] = $null
         }
         $this.level--
+        #Write-Host B level=$($this.level) $this.ArrayToString($this.local_array)
     }
 
     # declares a new variable, but can also update if it already exists
@@ -157,26 +161,34 @@ class Environment {
         return $false
     }
 
+    [string] ArrayToString($array) {
+        $str = ""
+        $array.Keys | foreach-object {
+            if ($array.containsKey("$_")) {
+                $cell = $array["$_"]
+                if ($cell -eq $null) {
+                    $s = "NULL"
+                } else {
+                    if ($cell.value -eq $null) {
+                        $s = "$($cell.level):NULL-VALUE"
+                    } else {
+                        #$s = "$($cell.level)"
+                        $s = "$($cell.level):$($cell.value)"
+                    }
+                }
+            } else {
+                $s = "null"
+            }
+            $str += "[$($_):$s]"
+        }
+        return $str
+    }
+
     [string] ToString() {
         $str = "`n`tGLOBAL_ARRAY"
-        $this.global_array.Keys | foreach-object {
-            if ($this.global_array.containsKey("$_")) {
-                $value = $this.global_array["$_"]
-            } else {
-                $value = "null"
-            }
-            $str += "[$($_):$value]"
-        }
+        $str += $this.ArrayToString($this.global_array)
         $str += "`n`tLOCAL_ARRAY"
-        $this.local_array.Keys | foreach-object {
-            if ($this.local_array.containsKey("$_")) {
-                $cell = $this.local_array["$_"]
-                $value = "$($cell.level):$($cell.value)"
-            } else {
-                $value = "null"
-            }
-            $str += "[$($_):$value]"
-        }
+        $str += $this.ArrayToString($this.local_array)
         return "{env:level=$($this.level),array:$str}"
     }
 }

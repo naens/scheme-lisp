@@ -8,6 +8,12 @@
   (writeln (+ x (f 7))))    ; (+ (g 4) (+ (g 8) 1)) = (+ 40 (+ 80 1)) = 121
 ; 121
 
+(letrec ((f (lambda (x) (+ (g (+ x 1)) 1)))
+         (x (g 4))
+         (g (lambda (x) (* x 10))))
+  (writeln (+ x (f 7))))    ; (+ (g 4) (+ (g 8) 1)) = (+ 40 (+ 80 1)) = 121
+; 121
+
 (letrec ((fib (lambda (n)
                (if (< n 2)
                 n
@@ -21,19 +27,49 @@
   (writeln (fact 5)))
 ; 120
 
-(letrec ((even
+; letrec version
+(letrec ((odd
            (lambda (lst)
             (cond
              ((empty? lst) empty)
-             (else (cons (car lst) (odd (cdr lst)))))))
-         (odd
+             (else (cons (car lst) (even (cdr lst)))))))
+         (even
            (lambda (lst)
             (cond
              ((empty? lst) empty)
-             (else (even (cdr lst)))))))
-  (writeln (even '(0 1 2 3 4 5)))
-  (writeln (odd '(0 1 2 3 4 5))))
-; (0 2 4)
+             (else (odd (cdr lst)))))))
+  (writeln (even '(1 2 3 4 5 6)))
+  (writeln (odd '(1 2 3 4 5 6))))
+; (2 4 6)
+; (1 3 5)
+
+; global version
+(define (odd lst)
+ (cond
+  ((empty? lst) empty)
+  (else (cons (car lst) (even (cdr lst))))))
+(define (even lst)
+ (cond
+  ((empty? lst) empty)
+  (else (odd (cdr lst)))))
+(writeln (even '(1 2 3 4 5 6)))
+(writeln (odd '(1 2 3 4 5 6)))
+; (2 4 6)
+; (1 3 5)
+
+; local version
+(begin
+  (define (odd lst)
+   (cond
+    ((empty? lst) empty)
+    (else (cons (car lst) (even (cdr lst))))))
+  (define (even lst)
+   (cond
+    ((empty? lst) empty)
+    (else (odd (cdr lst)))))
+  (writeln (even '(1 2 3 4 5 6)))
+  (writeln (odd '(1 2 3 4 5 6))))
+; (2 4 6)
 ; (1 3 5)
 
 (define (f c)

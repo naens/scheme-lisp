@@ -89,6 +89,20 @@
 (writeln (odd '(1 2 3 4 5)))
 ; (1 3 5)
 
+(begin
+ (define (odd lst)
+  (cond
+   ((empty? lst) empty)
+   (else (cons (car lst) (even (cdr lst))))))
+ (define (even lst)
+  (cond
+   ((empty? lst) empty)
+   (else (odd (cdr lst)))))
+ (writeln (even '(1 2 3 4 5 6)))
+ (writeln (odd '(1 2 3 4 5 6))))
+; (2 4 6)
+; (1 3 5)
+
 
 
 ;; lambda expressions application

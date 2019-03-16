@@ -112,29 +112,29 @@ function Eval-Case($caseTail, $env, $denv) {
     return New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
 }
 
-function Define-Defines($body, $env) {
-    $cons = $body
-    while ($cons.type -eq "Cons") {
-        $element = $cons.car
-        $car = $element.car
-        $cdr = $element.cdr
-        if ($car.type -eq "Symbol" -and $car.value -eq "DEFINE" -and $cdr.type -eq "Cons") {
-            $cadr = $cdr.car
-            if ($cadr.type -eq "Symbol") {
-                $name = $cadr.value
-            } elseif ($cadr.type -eq "Cons" -and $cadr.car.type -eq "Symbol") {
-                $name = $cadr.car.value
-            } else {
-                throw [EvaluatorException] "DEFINE-DEFINES: could not read define: $element"
-            }
-            $env.Declare($name, $null)
-        }
-        $cons = $cons.cdr
-    }
-}
+#function Define-Defines($body, $env) {
+#    $cons = $body
+#    while ($cons.type -eq "Cons") {
+#        $element = $cons.car
+#        $car = $element.car
+#        $cdr = $element.cdr
+#        if ($car.type -eq "Symbol" -and $car.value -eq "DEFINE" -and $cdr.type -eq "Cons") {
+#            $cadr = $cdr.car
+#            if ($cadr.type -eq "Symbol") {
+#                $name = $cadr.value
+#            } elseif ($cadr.type -eq "Cons" -and $cadr.car.type -eq "Symbol") {
+#                $name = $cadr.car.value
+#            } else {
+#                throw [EvaluatorException] "DEFINE-DEFINES: could not read define: $element"
+#            }
+#            $env.Declare($name, $null)
+#        }
+#        $cons = $cons.cdr
+#    }
+#}
 
 function Eval-Body($body, $env, $denv, $tco0) {
-    Define-Defines $body $env
+    #Define-Defines $body $env
     $cons = $body
     $result = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
     while ($cons.type -eq "Cons") {
@@ -200,6 +200,7 @@ function Eval-LetRec($letTail, $env, $denv, $tco) {
     $varvalList = $letTail.car
     $body = $letTail.cdr
 
+    #Write-Host $env
     $env.EnterScope()
     $params = @()
     $exps = @()
@@ -213,6 +214,7 @@ function Eval-LetRec($letTail, $env, $denv, $tco) {
         $exps += $exp
         $varvalList = $varvalList.cdr
     }
+    #$env.PrintEnv()
     $len = $params.length
     $i = 0
     while ($i -lt $len) {
@@ -228,6 +230,7 @@ function Eval-LetRec($letTail, $env, $denv, $tco) {
     }
     $result = Eval-Body $body $env $denv $true
     $env.LeaveScope()
+    #Write-Host $env
     return $result
 }
 
@@ -289,7 +292,7 @@ function Invoke($function, $argsExp, $env, $denv, $tco) {
     $params = $funVal.params
     $defEnv = $funVal.defEnv
     #Write-Host INVOKE: TCO=$tco
-    $tco = $false
+    #$tco = $false
 
     #Write-Host $defEnv
     $denv.EnterScope()
@@ -384,9 +387,9 @@ function Evaluate($exp, $env, $denv, $tco) {
                         return Eval-Or $cdr $env $denv $tco
                     }
                     "BEGIN" {
-                        $env.EnterScope
+                        $env.EnterScope()
                         $result = Eval-Body $cdr $env $denv $tco
-                        $env.LeaveScope
+                        $env.LeaveScope()
                         return $result
                     }
                     "SET!" {

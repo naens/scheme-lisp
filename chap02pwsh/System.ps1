@@ -162,10 +162,10 @@ function Call-BuiltIn($name, $argsExp, $env, $denv) {
             return SysExit
         }
         "BYE" {
-            return SysBye
+            return SysExit
         }
         "QUIT" {
-            return SysQuit
+            return SysExit
         }
     }
 }
@@ -241,9 +241,7 @@ function SysWrite($a) {
 }
 
 function SysWriteLn($a) {
-    $e = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
     foreach ($exp in $a) {
-        $e = $exp
         Write-Host -NoNewline $exp
     }
     Write-Host ""
@@ -294,7 +292,6 @@ function SysEval($a) {
 }
 
 function SysApply($funExp, $argsExp) {
-    # Write-Host SYSAPPLY fun=$funExp args=$argsExp
     $function = Evaluate $funExp $env $denv $false
     $env = Make-Global-Environment
     $denv = New-Object Environment "#<apply>"
@@ -324,7 +321,7 @@ function SysRead($a, $env, $denv) {
         try {
             $exp = Evaluate $_ $env $denv $false
         } catch [EvaluatorException] {
-            Write-Output ("Exception in SysLoad: " + $($_.Exception.msg))
+            Write-Output ("Exception in SysRead: " + $($_.Exception.msg))
         }
     }
     return $exp
