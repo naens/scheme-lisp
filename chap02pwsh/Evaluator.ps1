@@ -15,7 +15,7 @@ function LookUp($name, $env, $denv) {
 
 function Update($name, $value, $env, $denv) {
     if (!$env.Update($name, $value)) {
-        return $denv.UpdateDynamic($name, $value)
+        return $denv.Declare($name, $value)
     }
     return $true
 }
@@ -112,7 +112,29 @@ function Eval-Case($caseTail, $env, $denv) {
     return New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
 }
 
+function Define-Defines($body, $env) {
+    $cons = $body
+    while ($cons.type -eq "Cons") {
+        $element = $cons.car
+        $car = $element.car
+        $cdr = $element.cdr
+        if ($car.type -eq "Symbol" -and $car.value -eq "DEFINE" -and $cdr.type -eq "Cons") {
+            $cadr = $cdr.car
+            if ($cadr.type -eq "Symbol") {
+                $name = $cadr.value
+            } elseif ($cadr.type -eq "Cons" -and $cadr.car.type -eq "Symbol") {
+                $name = $cadr.car.value
+            } else {
+                throw [EvaluatorException] "DEFINE-DEFINES: could not read define: $element"
+            }
+            $env.Declare($name, $null)
+        }
+        $cons = $cons.cdr
+    }
+}
+
 function Eval-Body($body, $env, $denv, $tco0) {
+    Define-Defines $body $env
     $cons = $body
     $result = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
     while ($cons.type -eq "Cons") {
@@ -249,13 +271,9 @@ function Extend-With-Args($argList, $dotValue, $function, $defEnv, $denv) {
         $arg = $argList[$i]
         $param = $params[$i]
         if (IsDynamic $param $defEnv $denv) {
-            #Write-Host $param is dynamic value $arg
-            $denv.DeclareDynamic($param, $arg)
+            $denv.Declare($param, $arg)
         } else {
-            #Write-Host $param is not dynamic value $arg
-            #Write-Host $defEnv
             $defEnv.Declare($param, $arg)
-            #Write-Host $defEnv
         }
         $i++
     }
@@ -376,24 +394,35 @@ function Evaluate($exp, $env, $denv, $tco) {
                         }
                         return $null
                     }
-                    { $_ -eq "DEFINE" -or $_ -eq "DYNAMIC" } {
-                        if ($_ -eq "DEFINE") {
-                            $declEnv = $env
-                        } else {
-                            $declEnv = $denv
-                        }
+                    "DEFINE" {
                         if ($cdr.car.Type -eq "Symbol") {
                             $name = $cdr.car.Value
                             $value = Evaluate $cdr.cdr.car $env $denv $false
-                            $declEnv.Declare($name, $value)
+                            $env.Declare($name, $value)
                             return $null
                         } else {
-                            # (define/dynamic (<name> . <params>) <body>)
+                            # (define (<name> . <params>) <body>)
                             $name = $cdr.car.car.value
                             $params = $cdr.car.cdr
                             $body = $cdr.cdr
                             $function = (Make-Function $name $env $params $body)
-                            $declEnv.DeclareDynamic($name, $function)
+                            $env.Declare($name, $function)
+                            return $null
+                        }
+                    }
+                    "DYNAMIC" {
+                        if ($cdr.car.Type -eq "Symbol") {
+                            $name = $cdr.car.Value
+                            $value = Evaluate $cdr.cdr.car $env $denv $false
+                            $denv.Declare($name, $value)
+                            return $null
+                        } else {
+                            # (dynamic (<name> . <params>) <body>)
+                            $name = $cdr.car.car.value
+                            $params = $cdr.car.cdr
+                            $body = $cdr.cdr
+                            $function = (Make-Function $name $env $params $body)
+                            $denv.Declare($name, $function)
                             return $null
                         }
                     }
@@ -418,6 +447,7 @@ function Evaluate($exp, $env, $denv, $tco) {
                                 return Invoke $function $cdr $env $denv $tco
                             }
                         }
+                        Write-Host $env
                         throw [EvaluatorException] "EVALUATE: Unknown Function $($car.value)"
                     }
                 }

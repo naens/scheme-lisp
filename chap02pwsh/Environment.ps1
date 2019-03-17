@@ -48,37 +48,19 @@ class Environment {
 
     # declares a new variable, but can also update if it already exists
     [void] Declare($name, $value) {
-        #Write-Host name=$name value=$value
-        if ($this.local_array.containsKey("$name")) {
-            $cell = $this.local_array["$name"]
-            if ($cell.level -lt $this.level) {
-                $newcell = New-Object Cell -ArgumentList $this.level, $value, $cell
-                $this.local_array[$name] = $newcell
-            } else {
-                # useful for situations when the name is first declared as $null and is set later
-                $cell.value = $value
-            }
-        } elseif ($this.level -eq 0 -and $this.global_array.containsKey("$name")) { #TODO: test "$this.level -eq 0"
+        if ($this.level -eq 0) {
             $this.global_array[$name] = $value
-        } else {
-            if ($this.level -eq 0) {
-                $this.global_array[$name] = $value
+        } elseif ( $this.local_array.containsKey("$name")) {
+            $cell = $this.local_array["$name"]
+            if ($cell.level -eq $this.level) {
+                $cell.value = $value
             } else {
-                $this.local_array[$name] = New-Object Cell -ArgumentList $this.level, $value, $null
+                $this.local_array[$name] = New-Object Cell -ArgumentList $this.level, $value, $cell
             }
+        } else {
+            $this.local_array[$name] = New-Object Cell -ArgumentList $this.level, $value, $null
         }
-    }
 
-    [void] DeclareDynamic($name, $value) {
-        if ($this.local_array.containsKey("$name") -or $this.global_array.containsKey("$name")) {
-            $this.UpdateDynamic($name, $value)
-        } else {
-            if ($this.level -eq 0) {
-                $this.global_array[$name] = $value
-            } else {
-                $this.local_array[$name] = New-Object Cell -ArgumentList $this.level, $value, $null
-            }
-        }
     }
 
     [Exp] LookUp($name) {
@@ -95,8 +77,6 @@ class Environment {
     }
 
     [boolean] Update($name, $value) {
-        #Write-Host UPDATE: name=$name value=$value
-        #$this.PrintEnv()
         if ($this.local_array.containsKey("$name")) {
             $cell = $this.local_array["$name"]
             $cell.value = $value
@@ -139,26 +119,6 @@ class Environment {
         }
         Write-Host "----END-ENV----"
         Write-Host
-    }
-
-    [boolean] UpdateDynamic($name, $value) {
-        if ($this.level -eq 0) {
-            if ($this.global_array.containsKey("$name")) {
-                $this.global_array[$name] = $value
-                return $true
-            }
-            return $false
-        } elseif ($this.local_array.containsKey("$name") -or $this.global_array.containsKey("$name")) {
-            $cell = $this.local_array["$name"]
-            if ($cell.level -eq $this.level) {
-                $cell.value = $value
-            } else {
-                $newcell = New-Object Cell -ArgumentList $this.level, $value, $cell
-                $this.local_array[$name] = $newcell
-            }
-            return $true
-        }
-        return $false
     }
 
     [string] ArrayToString($array) {

@@ -14,6 +14,12 @@
 (writeln (map '(2 4 6 8) div2))
 ; (1 2 3 4)
 
+(define (fact1 x)
+ (cond ((<= x 2) x)
+  (#t  (* x (fact1 (- x 1))))))
+(writeln (fact1 5))
+; 120
+
 (begin
   (define (fact x)
    (cond ((<= x 2) x)
