@@ -60,7 +60,6 @@ class Environment {
         } else {
             $this.local_array[$name] = New-Object Cell -ArgumentList $this.level, $value, $null
         }
-
     }
 
     [Exp] LookUp($name) {
@@ -132,8 +131,8 @@ class Environment {
                     if ($cell.value -eq $null) {
                         $s = "$($cell.level):NULL-VALUE"
                     } else {
-                        #$s = "$($cell.level)"
-                        $s = "$($cell.level):$($cell.value)"
+                        $s = "$($cell.level):<...>"
+                        #$s = "$($cell.level):$($cell.value)"
                     }
                 }
             } else {
@@ -145,11 +144,12 @@ class Environment {
     }
 
     [string] ToString() {
-        $str = "`n`tGLOBAL_ARRAY"
-        $str += $this.ArrayToString($this.global_array)
-        $str += "`n`tLOCAL_ARRAY"
+        $str = ""
+        #$str += "`n`tGLOBAL_ARRAY"
+        #$str += $this.ArrayToString($this.global_array)
+        $str += "`tLOCAL_ARRAY"
         $str += $this.ArrayToString($this.local_array)
-        return "{env:level=$($this.level),array:$str}"
+        return "{env:`"$($this.name)`":level=$($this.level)$str}"
     }
 }
 
