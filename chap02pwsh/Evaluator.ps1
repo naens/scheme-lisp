@@ -55,11 +55,17 @@ function Eval-Cond($condTail, $env, $denv) {
         $cond = $pair.car
         $body = $pair.cdr
         if ($cond.type -eq "Symbol" -and $cond.value -eq "ELSE") {
-            return Eval-Body $body $env $denv
+            $env.EnterScope()
+            $result = Eval-Body $body $env $denv
+            $env.LeaveScope()
+            return $result
         }
         $condValue = Evaluate $cond $env $denv
         if (Is-True($condValue)) {
-            return Eval-Body $body $env $denv
+            $env.EnterScope()
+            $result = Eval-Body $body $env $denv
+            $env.LeaveScope()
+            return $result
         }
         $c = $c.cdr
     }
@@ -97,13 +103,19 @@ function Eval-Case($caseTail, $env, $denv) {
         $pair = $c.car     # (cons ({<datum>}) . <body>)
         $body = $pair.cdr
         if ($pair.car.type -eq "Symbol" -and $pair.car.value -eq "ELSE") {
-            return Eval-Body $body $env $denv
+            $env.EnterScope()
+            $result = Eval-Body $body $env $denv
+            $env.LeaveScope()
+            return $result
         }
         $datumList = $pair.car
         while ($datumList.type -eq "Cons") {
             $datum = $datumList.car     # !! datum is not evaluated here
             if (IsEqual $val  $datum) {
-                return Eval-Body $body $env $denv
+                $env.EnterScope()
+                $result = Eval-Body $body $env $denv
+                $env.LeaveScope()
+                return $result
             }
             $datumList = $datumList.cdr
         }
@@ -133,18 +145,17 @@ function Define-Defines($body, $env) {
     }
 }
 
-function Eval-Body($body, $env, $denv, $tco0) {
+function Eval-Body($body, $env, $denv) {
     Define-Defines $body $env
     $cons = $body
     $result = New-Object Exp -ArgumentList ([ExpType]::Symbol), "NIL"
     while ($cons.type -eq "Cons") {
-        $tco = $tco0 -and ($cons.cdr.type -eq "Symbol")
+        $tco = ($cons.cdr.type -eq "Symbol")
         $result = Evaluate $cons.car $env $denv $tco
         $cons = $cons.cdr
     }
     return $result
 }
-
 
 function List-To-Cons($list) {
     $prev = $null
@@ -173,7 +184,7 @@ function Eval-Let($letTail, $env, $denv, $tco) {
         $varval = $varvalList.car
         $var = $varval.car
         $params += $var
-        $val = Evaluate $varval.cdr.car $env $denv $false
+        $val = $varval.cdr.car
         $args += $val
         $varvalList = $varvalList.cdr
     }
@@ -227,7 +238,7 @@ function Eval-LetRec($letTail, $env, $denv, $tco) {
         $t = Update $param $val $env $denv
         $i++
     }
-    $result = Eval-Body $body $env $denv $true
+    $result = Eval-Body $body $env $denv
     $env.LeaveScope()
     #Write-Host $env
     return $result
@@ -297,12 +308,12 @@ function Invoke($function, $argsExp, $env, $denv, $tco) {
         $defEnv.EnterScope()
         Extend-With-Args $argList $dotValue $function $defEnv $denv
         #$defEnv.PrintEnv()
-        $result = Eval-Body $function.value.body $defEnv $denv $true
+        $result = Eval-Body $function.value.body $defEnv $denv
         $defEnv.LeaveScope()
     } else {
         # do not invoke enter/leave scope here
         Extend-With-Args $argList $dotValue $function $defEnv $denv
-        $result = Eval-Body $function.value.body $defEnv $denv $true
+        $result = Eval-Body $function.value.body $defEnv $denv
     }
     $denv.LeaveScope()
 
@@ -383,7 +394,7 @@ function Evaluate($exp, $env, $denv, $tco) {
                     }
                     "BEGIN" {
                         $env.EnterScope()
-                        $result = Eval-Body $cdr $env $denv $tco
+                        $result = Eval-Body $cdr $env $denv
                         $env.LeaveScope()
                         return $result
                     }

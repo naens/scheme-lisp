@@ -27,6 +27,19 @@
   (writeln (fact 5)))
 ; 120
 
+(begin
+  (define (odd lst)
+   (cond
+    ((empty? lst) empty)
+    (else (cons (car lst) (even (cdr lst))))))
+  (define (even lst)
+   (cond
+    ((empty? lst) empty)
+    (else (odd (cdr lst)))))
+  (writeln (even '(1 2 3 4 5 6)))
+  (writeln (odd '(1 2 3 4 5 6)))
+  )
+
 ; local version
 (begin
   (define (odd lst)
@@ -124,3 +137,17 @@
 (cnt 'dec)
 (cnt 'pr)
 ; 0
+
+(define (tree-sum tree)
+ (let ((n (car tree))
+       (adj (cdr tree)))
+  (+ n (tree-sum-list adj))))
+
+(define (tree-sum-list list)
+ (if (null? list)
+  0
+  (+ (tree-sum (car list)) (tree-sum-list (cdr list)))))
+
+(tree-sum '(5 . ((6 . ()) (9 . ()))))
+; 20
+
