@@ -148,6 +148,8 @@
   0
   (+ (tree-sum (car list)) (tree-sum-list (cdr list)))))
 
-(tree-sum '(5 . ((6 . ()) (9 . ()))))
+(writeln (tree-sum '(5 . ((6 . ()) (9 . ())))))
 ; 20
 
+(writeln (tree-sum '(1 . ((2 . ((4 . ((8 . ()) (9 . ()))) (5 . ()))) (3 . ((6 . ()) (7 . ())))))))
+; 45

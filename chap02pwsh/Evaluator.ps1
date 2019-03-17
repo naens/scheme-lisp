@@ -15,7 +15,7 @@ function LookUp($name, $env, $denv) {
 
 function Update($name, $value, $env, $denv) {
     if (!$env.Update($name, $value)) {
-        return $denv.Declare($name, $value)
+        return $denv.UpdateDynamic($name, $value)
     }
     return $true
 }

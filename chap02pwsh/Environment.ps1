@@ -50,7 +50,7 @@ class Environment {
     [void] Declare($name, $value) {
         if ($this.level -eq 0) {
             $this.global_array[$name] = $value
-        } elseif ( $this.local_array.containsKey("$name")) {
+        } elseif ($this.local_array.containsKey("$name")) {
             $cell = $this.local_array["$name"]
             if ($cell.level -eq $this.level) {
                 $cell.value = $value
@@ -83,6 +83,24 @@ class Environment {
         }
         if ($this.global_array.containsKey("$name")) {
             $this.global_array["$name"] = $value
+            return $true
+        }
+        return $false
+    }
+
+    [boolean] UpdateDynamic($name, $value) {
+        if ($this.level -eq 0) {
+            if ($this.global_array.containsKey("$name")) {
+                $this.global_array["$name"] = $value
+                return $true
+            }
+        } elseif ($this.local_array.containsKey("$name") -or $this.global_array.containsKey("$name")) {
+            $cell = $this.local_array["$name"]
+            if ($cell.level -eq $this.level) {
+                $cell.value = $value
+            } else {
+                $this.local_array["$name"] = New-Object Cell -ArgumentList $this.level, $value, $cell
+            }
             return $true
         }
         return $false
