@@ -14,6 +14,12 @@
 (writeln (map '(2 4 6 8) div2))
 ; (1 2 3 4)
 
+(define (map-mult l n)
+ (writeln (map l (lambda (x) (* x n)))))
+
+(map-mult '(1 2 3 4) 10)
+; (10 20 30 40)
+
 (define (fact1 x)
  (cond ((<= x 2) x)
   (#t  (* x (fact1 (- x 1))))))
