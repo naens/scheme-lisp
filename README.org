@@ -8,7 +8,7 @@ times.  And also, in order to avoid recycling and copy-pasting the code I wrote
 in previous versions, I do every version in a different programming language.
 It also allows me to explore a previously unknown language.
 
-So far this is what was done:
+So far this is what has been done and what will follow:
  * chapter 01 in Kotlin
  * chapter 02 in PowerShell
  * chapter 03 will be in Swift (not sure yet)
