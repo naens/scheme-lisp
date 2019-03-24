@@ -9,9 +9,9 @@ in previous versions, I do every version in a different programming language.
 It also allows me to explore a previously unknown language.
 
 So far this is what has been done and what will follow:
- * chapter 01 in Kotlin
- * chapter 02 in PowerShell
- * chapter 03 will be in Swift (not sure yet)
- * chapter 04 will be in PL/M (not sure yet)
+ * chapter 01 in *Kotlin*
+ * chapter 02 in *PowerShell*
+ * chapter 03 will be in *Swift* (not sure yet)
+ * chapter 04 will be in *PL/M* (not sure yet)
 
 If you have a suggestion for a language I should explore, please let me know!
