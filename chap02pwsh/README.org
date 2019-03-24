@@ -1,0 +1,9 @@
+* Scheme interpreter written in PowerShell
+This is a small interpreter written in PowerShell.  It's really minimalistic.  It has some features which are not very common in Scheme interpreters:
+  * dynamic functions and variables
+  * exceptions which crash the whole program.  I call them /crashers/
+  
+You can see examples in the ~tests~ directory.
+
+More details in this blog post:
+[[https://dev.to/naens/the-powerscheme-interpreter-46k9][https://dev.to/naens/the-powerscheme-interpreter-46k9]]
