@@ -2388,7 +2388,7 @@ The code for doing it is really simple:
 And this is an example of a REPL session:
 #+BEGIN_SRC scheme
 ZSH:gproj/scheme-lisp/chap02pwsh>pwsh PwScheme.ps1 tests/toplevel.scm
->: (let ((x 5) (y 3)) (+ x (* y 10))))
+>: (let ((x 5) (y 3)) (+ x (* y 10)))
 35
 >: (define (lola x) (writeln 35) (writeln x))
 
@@ -2441,7 +2441,7 @@ the same call again with a lower value.
 
 Here is how it's invoked:
 #+BEGIN_SRC scheme
-((fix meta-fact) 3))
+((fix meta-fact) 3)
 #+END_SRC
 
 The important thing here is that ~(fix meta-fact)~ is equivalent to
@@ -2846,4 +2846,3 @@ hope you enjoyed reading it, see you in the next post.
 
 bibliography:bibliography.bib
 bibliographystyle:unsrt
-
